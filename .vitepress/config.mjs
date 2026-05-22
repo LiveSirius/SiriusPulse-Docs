@@ -1,16 +1,14 @@
 import { defineConfig } from 'vitepress'
-import { withMermaid } from 'vitepress-plugin-mermaid'
 
-export default withMermaid(
-  defineConfig({
-    lang: 'zh-CN',
-    title: 'Sirius Pulse',
-    description: '异步角色扮演聊天框架 — 支持多人格、多平台、多模型',
+export default defineConfig({
+  lang: 'zh-CN',
+  title: 'Sirius Pulse',
+  description: '异步角色扮演聊天框架 — 支持多人格、多平台、多模型',
 
-    lastUpdated: true,
-    cleanUrls: true,
+  lastUpdated: true,
+  cleanUrls: true,
 
-    themeConfig: {
+  themeConfig: {
     logo: '/yuebai.png',
 
     nav: [
@@ -106,4 +104,3 @@ export default withMermaid(
     },
   },
 })
-)
