@@ -1,0 +1,87 @@
+import { defineConfig } from 'vitepress'
+
+export default defineConfig({
+  lang: 'zh-CN',
+  title: 'Sirius Pulse',
+  description: '异步角色扮演聊天框架 — 支持多人格、多平台、多模型',
+
+  lastUpdated: true,
+  cleanUrls: true,
+
+  themeConfig: {
+    logo: '/favicon.svg',
+
+    nav: [
+      { text: '首页', link: '/' },
+      { text: '指南', link: '/guide/', activeMatch: '/guide/' },
+      { text: '参考', link: '/reference/', activeMatch: '/reference/' },
+    ],
+
+    sidebar: {
+      '/guide/': [
+        {
+          text: '入门',
+          items: [
+            { text: '快速开始', link: '/guide/quickstart' },
+            { text: '安装', link: '/guide/installation' },
+            { text: '配置', link: '/guide/configuration' },
+          ],
+        },
+        {
+          text: '核心概念',
+          items: [
+            { text: '人格系统', link: '/guide/persona-system' },
+            { text: '引擎架构', link: '/guide/engine-architecture' },
+            { text: '记忆系统', link: '/guide/memory-system' },
+            { text: '技能系统', link: '/guide/skill-system' },
+          ],
+        },
+        {
+          text: '平台接入',
+          items: [
+            { text: 'NapCat / OneBot', link: '/guide/platform-napcat' },
+          ],
+        },
+      ],
+      '/reference/': [
+        {
+          text: '配置参考',
+          items: [
+            { text: '全局配置', link: '/reference/global-config' },
+            { text: '人格配置', link: '/reference/persona-config' },
+            { text: 'Provider 配置', link: '/reference/provider-config' },
+          ],
+        },
+        {
+          text: 'API 参考',
+          items: [
+            { text: 'Python API', link: '/reference/python-api' },
+            { text: 'WebUI API', link: '/reference/webui-api' },
+          ],
+        },
+        {
+          text: '开发',
+          items: [
+            { text: '开发指南', link: '/reference/development' },
+            { text: '编写技能', link: '/reference/skill-authoring' },
+            { text: '编写插件', link: '/reference/plugin-authoring' },
+          ],
+        },
+      ],
+    },
+
+    socialLinks: [
+      { icon: 'github', link: 'https://github.com/Sparrived/SiriusChat' },
+    ],
+
+    editLink: {
+      pattern: 'https://github.com/Sparrived/SiriusChat-docs/edit/main/:path',
+      text: '在 GitHub 上编辑此页',
+    },
+
+    footer: {
+      message: '基于 MIT 许可证发布',
+      copyright: 'Copyright © 2025-2026 Sparrived',
+    },
+  },
+})
