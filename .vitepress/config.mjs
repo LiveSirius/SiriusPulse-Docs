@@ -39,6 +39,7 @@ export default defineConfig({
           text: '核心概念',
           items: [
             { text: '人格系统', link: '/guide/persona-system' },
+            { text: '系统架构全景', link: '/guide/architecture-overview' },
             { text: '引擎架构', link: '/guide/engine-architecture' },
             { text: '记忆系统', link: '/guide/memory-system' },
           ],
