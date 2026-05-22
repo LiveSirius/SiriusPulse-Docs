@@ -1,63 +1,26 @@
 # 全局配置
 
-全局配置文件 `data/global_config.json` 控制 Sirius Pulse 的系统级别参数。
+在 **WebUI → 全局设置** 页面配置系统级参数。无需直接编辑文件。
 
-## 完整字段
+---
 
-```json
-{
-  "webui_port": 8080,
-  "webui_host": "127.0.0.1",
-  "napcat_base_port": 3001,
-  "embedding_model": "BAAI/bge-small-zh-v1.5",
-  "embedding_port": 5555,
-  "embedding_device": "cpu",
-  "plugins_dir": "plugins",
-  "skills_dir": "skills",
-  "log_level": "INFO",
-  "log_format": "console",
-  "data_dir": "data"
-}
-```
+## 系统参数
 
-## 字段说明
+| 字段 | 默认值 | 说明 |
+|------|--------|------|
+| WebUI 端口 | `8080` | 管理面板 HTTP 端口 |
+| WebUI 地址 | `127.0.0.1` | 监听地址 |
+| NapCat 起始端口 | `3001` | 多人格时每人格递增 1 |
+| Embedding 模型 | `BAAI/bge-small-zh-v1.5` | Hugging Face 模型名 |
+| Embedding 端口 | `5555` | 微服务端口 |
+| Embedding 设备 | `cpu` | cpu / cuda |
+| 插件目录 | `plugins` | 相对项目根 |
+| 技能目录 | `skills` | 相对项目根 |
+| 日志级别 | `INFO` | DEBUG / INFO / WARNING / ERROR |
+| 日志格式 | `console` | console / file |
 
-### webui
-
-| 字段 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `webui_port` | int | `8080` | WebUI 管理面板 HTTP 端口 |
-| `webui_host` | str | `127.0.0.1` | WebUI 绑定地址 |
-
-### NapCat
-
-| 字段 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `napcat_base_port` | int | `3001` | NapCat 多实例起始端口。每人格在 base_port 基础上递增 1 |
-
-### Embedding
-
-| 字段 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `embedding_model` | str | `BAAI/bge-small-zh-v1.5` | Hugging Face 嵌入模型名 |
-| `embedding_port` | int | `5555` | Embedding 微服务端口 |
-| `embedding_device` | str | `cpu` | 推理设备：`cpu` / `cuda` |
-
-### 路径
-
-| 字段 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `plugins_dir` | str | `plugins` | 插件目录，相对于项目根目录 |
-| `skills_dir` | str | `skills` | 技能目录，相对于项目根目录 |
-| `data_dir` | str | `data` | 数据目录，存储配置和运行时数据 |
-
-### 日志
-
-| 字段 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `log_level` | str | `INFO` | 日志级别：`DEBUG` / `INFO` / `WARNING` / `ERROR` |
-| `log_format` | str | `console` | 日志格式：`console` / `file` |
+---
 
 ## 自动创建
 
-首次运行 `sirius-pulse` 时，系统会自动创建 `global_config.json` 及其默认值，无需手动创建。
+首次运行 `sirius-pulse webui` 时系统会自动生成默认配置文件，无需手动创建。

@@ -1,169 +1,155 @@
 # 配置
 
-Sirius Pulse 的配置分为**全局配置**和**人格级配置**两个层级。
+Sirius Pulse 提供 **WebUI 可视化配置**，无需手动编辑 JSON 文件。以下按 WebUI 页面逐一说明各项的含义。
 
-## 配置层级
+---
 
-```mermaid
-flowchart TB
-    A["全局配置<br>data/global_config.json"] --> A1["系统参数<br>端口、路径等"]
-    A --> A2["默认值"]
-    A2 -->|"可被覆盖"| B
-    subgraph B["人格配置<br>data/personas/{name}/"]
-        B1["persona.json<br>角色定义"]
-        B2["orchestration.json<br>模型编排"]
-        B3["adapters.json<br>平台适配器"]
-        B4["experience.json<br>体验参数"]
-    end
-```
+## WebUI 全局设置
 
-## 全局配置
+### 系统参数
 
-文件路径：`data/global_config.json`
+| 字段 | 默认值 | 说明 |
+|------|--------|------|
+| WebUI 端口 | `8080` | 管理面板访问端口 |
+| NapCat 起始端口 | `3001` | 多人格时自动递增分配 |
+| Embedding 模型 | `BAAI/bge-small-zh-v1.5` | 语义记忆用的嵌入模型 |
+| Embedding 端口 | `5555` | 嵌入微服务端口 |
+| 插件目录 | `plugins` | 插件扫描目录（相对项目根） |
+| 技能目录 | `skills` | 技能扫描目录 |
 
-```json
-{
-  "webui_port": 8080,
-  "napcat_base_port": 3001,
-  "embedding_model": "BAAI/bge-small-zh-v1.5",
-  "embedding_port": 5555,
-  "plugins_dir": "plugins",
-  "skills_dir": "skills"
-}
-```
+---
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `webui_port` | int | WebUI 管理面板端口 |
-| `napcat_base_port` | int | NapCat 多实例起始端口（每人格递增 1） |
-| `embedding_model` | str | Hugging Face 模型名 |
-| `embedding_port` | int | Embedding 微服务端口 |
+## 人格定义
 
-## 人格定义（persona.json）
+创建人格后，在 **人格管理** 页面配置角色的身份和性格。
 
-角色的核心身份和性格设定：
-
-```json
-{
-  "name": "小星",
-  "aliases": ["小星", "星酱"],
-  "backstory": "来自赛博世界的人工智能助手...",
-  "personality_traits": {
-    "core": "热情、幽默、善解人意",
-    "emotional_style": "喜怒形于色，但会控制在一个友善的范围内",
-    "speech_style": "口语化、喜欢用感叹词",
-    "response_habit": "会引用群友的话，会追问细节",
-    "social_preference": "喜欢参与热闹话题，不喜欢冷场"
-  },
-  "communication_style": "chatty",
-  "taboo_topics": [],
-  "gender": "female",
-  "age_group": "young_adult"
-}
-```
+### 基本身份
 
 | 字段 | 说明 |
 |------|------|
-| `name` | 角色名 |
-| `aliases` | 别名列表（群友可能用不同称呼） |
-| `backstory` | 角色背景故事，影响回复风格 |
-| `personality_traits` | 性格特质（core / emotional_style / speech_style / response_habit / social_preference） |
-| `communication_style` | 对话风格：`chatty`（健谈）/ `concise`（简洁）/ `selective`（选择性回复） |
-| `taboo_topics` | 敏感话题列表（AI 会主动回避） |
+| 角色名 | 人格唯一标识 |
+| 别名 | 群友可能用的不同称呼，用逗号分隔 |
+| 背景故事 | 角色背景，会影响回复风格和话题偏好 |
+| 性别 | male / female / other |
+| 年龄段 | child / teen / young_adult / adult / elder |
+| 兴趣标签 | 角色感兴趣的话题方向 |
+| 语言 | 语言代码，如 `zh-CN` |
 
-## 模型编排（orchestration.json）
+### 性格特质（六个维度）
 
-```json
-{
-  "chat_model": "deepseek-chat",
-  "analysis_model": "deepseek-chat",
-  "vision_model": null,
-  "proactive_model": "deepseek-chat"
-}
-```
-
-| 字段 | 用途 |
+| 维度 | 示例 |
 |------|------|
-| `chat_model` | 对话生成（主要模型） |
-| `analysis_model` | 意图/情绪分析（轻量模型） |
-| `vision_model` | 图片理解（可选） |
-| `proactive_model` | 主动发起对话 |
-| `embedding_model` | 嵌入模型（可选覆盖全局） |
+| 核心性格 | `"热情、幽默、善解人意"` |
+| 情绪表达 | `"喜怒形于色，但控制在友善范围内"` |
+| 说话风格 | `"口语化、喜欢用感叹词和 emoji"` |
+| 回应习惯 | `"会引用群友的话做回应"` |
+| 社交偏好 | `"喜欢参与热闹话题，沉默时会找话题"` |
+| 幽默风格 | `"冷幽默、文字游戏爱好者"` |
 
-## 体验参数（experience.json）
+### 交流风格
 
-微调 AI 的响应行为：
+| 值 | 效果 |
+|----|------|
+| 健谈 | 高频参与对话 |
+| 正常 | 标准行为 |
+| 选择性 | 仅高相关度话题时才回复 |
 
-```json
-{
-  "sensitivity": 0.7,
-  "reply_frequency": "normal",
-  "proactive_behavior": "low",
-  "memory_depth": 5,
-  "skill_timeout": 30.0,
-  "plugin_timeout": 30.0,
-  "max_response_tokens": 512,
-  "temperature": 0.8,
-  "cooldown_seconds": 5.0,
-  "private_chat_reply_always": true,
-  "cross_group_memory": true,
-  "send_stickers": true,
-  "log_inner_thoughts": false
-}
+---
+
+## 模型编排
+
+在 **模型编排** 页面设置每个任务使用的 LLM 模型。
+
+### 四个通用模型
+
+| 通用模型 | 覆盖的子任务 |
+|---------|-------------|
+| 分析模型 | 认知分析、记忆提取 |
+| 对话模型 | 回复生成、主动发言、被动技能、GitHub 通知 |
+| 记忆维护模型 | 日记生成/合并、传记蒸馏/更新 |
+| 插件模型 | 插件生成/分析/渲染/原生调用 |
+
+### 高级设置（按任务）
+
+每个子任务点击 ⚙ 可单独覆盖：
+- **模型**：选择不同于通用模型的特定模型
+- **温度**（0-2）：控制回复随机性
+- **最大 Token**：限制单次生成长度
+
+---
+
+## Provider
+
+在 **Provider** 页面配置 LLM API 凭证。
+
+支持的 Provider 及默认 API 地址：
+
+| Provider | 默认 API 地址 |
+|----------|-------------|
+| DeepSeek | `https://api.deepseek.com` |
+| SiliconFlow | `https://api.siliconflow.cn/v1` |
+| 阿里云百炼 | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
+| 火山方舟 | `https://ark.cn-beijing.volces.com/api/v3` |
+| 智谱 BigModel | `https://open.bigmodel.cn/api/paas/v4` |
+| OpenAI 兼容 | 自定义 |
+
+所有人格共用 Provider 配置。也可以配置多个 Provider，系统按健康检查自动路由。
+
+---
+
+## 体验参数
+
+在 **体验参数** 页面微调 AI 的响应行为。
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| 参与灵敏度 | `0.5` | 0~1，越高越容易参与对话 |
+| 回复模式 | auto | auto / always / never |
+| 活泼度 | `0.5` | 0~1，控制语气活泼程度 |
+| 主动行为 | 启用 | 是否主动发起对话 |
+| 主动间隔 | `300s` | 主动发言的最小间隔 |
+| 延迟回复 | 启用 | 是否等待确认窗口再回复 |
+| 最小回复间隔 | `0s` | 两次回复的最小间隔 |
+| 回复频率窗口 | `60s` | 频率统计窗口 |
+| 窗口内最大回复数 | `8` | 窗口内最多回复条数 |
+| 被名时豁免 | 启用 | 被@或叫名字时跳过频率限制 |
+| 表情包 | 启用 | 是否自动发送表情包 |
+
+---
+
+## 适配器
+
+在 **适配器** 页面将人格绑定到平台。
+
+### NapCat 适配器
+
+| 字段 | 说明 |
+|------|------|
+| WS 地址 | `ws://127.0.0.1:3001` |
+| QQ | 账号 |
+| WS Token | 认证 token |
+| 群聊白名单 | 留空不限制 |
+| 私聊白名单 | 留空不限制 |
+
+### NapCat 管理
+
+在 **NapCat** 页面统一管理所有 NapCat 实例：安装、启动、停止。扫码登录后即可使用。
+
+---
+
+## 数据目录结构
+
+WebUI 操作会自动维护以下文件，一般不手工编辑：
+
 ```
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `sensitivity` | float (0-1) | 回复敏感度，越高越容易回复 |
-| `reply_frequency` | str | `high` / `normal` / `selective` |
-| `proactive_behavior` | str | 主动发起对话的强度 |
-| `memory_depth` | int | 每次对话携带的历史消息数 |
-| `skill_timeout` | float | 技能执行超时（秒） |
-| `plugin_timeout` | float | 插件执行超时（秒） |
-| `max_response_tokens` | int | 单次回复最大 token 数 |
-| `temperature` | float (0-2) | 模型随机性 |
-| `cooldown_seconds` | float | 回复冷却时间 |
-| `private_chat_reply_always` | bool | 私聊是否实时回复 |
-| `cross_group_memory` | bool | 是否启用跨群记忆 |
-| `send_stickers` | bool | 是否自动发送表情包 |
-| `log_inner_thoughts` | bool | 是否记录内心活动日志 |
-
-## Provider 配置
-
-文件路径：`data/providers/provider_keys.json`
-
-```json
-{
-  "deepseek": {
-    "api_key": "sk-xxx",
-    "base_url": "https://api.deepseek.com"
-  },
-  "siliconflow": {
-    "api_key": "sk-xxx",
-    "base_url": "https://api.siliconflow.cn/v1"
-  }
-}
+data/
+├── global_config.json           # 系统参数
+├── providers/
+│   └── provider_keys.json       # LLM 凭证
+└── personas/
+    └── {name}/
+        ├── persona.json         # 角色定义
+        ├── orchestration.json   # 模型编排
+        ├── adapters.json        # 平台适配器
+        └── experience.json      # 体验参数
 ```
-
-详见 [Provider 配置参考](/reference/provider-config)。
-
-## 适配器配置（adapters.json）
-
-```json
-{
-  "adapters": [
-    {
-      "type": "napcat",
-      "ws_url": "ws://127.0.0.1:3001",
-      "qq": 123456789,
-      "ws_token": "your-token",
-      "group_whitelist": [123456789],
-      "private_whitelist": []
-    }
-  ]
-}
-```
-
-每个适配器配置一个平台连接。一个人格可以同时接入多个适配器。
-
-详见 [人格配置参考](/reference/persona-config)。

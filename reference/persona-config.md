@@ -1,134 +1,88 @@
 # 人格配置
 
-人格级配置文件存放在 `data/personas/{name}/` 目录下，包括四个独立文件。
+所有人格相关配置在 **WebUI → 人格管理 / 适配器 / 体验参数 / 模型编排** 页面操作。无需直接编辑文件。以下为各字段的参考说明。
+
+---
 
 ## persona.json — 角色定义
 
-```json
-{
-  "name": "小星",
-  "aliases": ["小星", "星酱"],
-  "backstory": "角色背景故事",
-  "personality_traits": {
-    "core": "核心性格",
-    "emotional_style": "情绪表达方式",
-    "speech_style": "说话风格",
-    "response_habit": "回应习惯",
-    "social_preference": "社交偏好",
-    "humor_style": "幽默风格（可选）"
-  },
-  "communication_style": "chatty",
-  "taboo_topics": ["话题1", "话题2"],
-  "gender": "female",
-  "age_group": "young_adult",
-  "interests": ["兴趣1", "兴趣2"],
-  "language": "zh-CN"
-}
-```
+在 **人格管理** 页面填写。
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| `name` | str | ✅ | 角色名（唯一标识） |
-| `aliases` | list[str] | ❌ | 别名列表 |
-| `backstory` | str | ❌ | 背景故事 |
-| `personality_traits` | dict | ✅ | 六个维度的性格特质 |
-| `communication_style` | str | ❌ | `chatty` / `normal` / `selective` |
-| `taboo_topics` | list[str] | ❌ | 敏感话题回避列表 |
-| `gender` | str | ❌ | `male` / `female` / `other` |
-| `age_group` | str | ❌ | `child` / `teen` / `young_adult` / `adult` / `elder` |
-| `interests` | list[str] | ❌ | 兴趣标签 |
-| `language` | str | ❌ | 语言代码，如 `zh-CN` |
+| 角色名 | str | ✅ | 人格唯一标识 |
+| 别名 | list[str] | ❌ | 别名列表，用逗号分隔 |
+| 背景故事 | str | ❌ | 角色背景，影响回复偏好 |
+| 核心性格 | str | ✅ | 性格关键词描述 |
+| 情绪表达 | str | ❌ | 情绪如何呈现 |
+| 说话风格 | str | ❌ | 语言习惯 |
+| 回应习惯 | str | ❌ | 回复套路 |
+| 社交偏好 | str | ❌ | 群体参与偏好 |
+| 幽默风格 | str | ❌ | 笑点类型 |
+| 交流风格 | str | ❌ | 健谈 / 正常 / 选择性 |
+| 敏感话题 | list[str] | ❌ | AI 主动回避的话题 |
+| 性别 | str | ❌ | male / female / other |
+| 年龄段 | str | ❌ | child / teen / young_adult / adult / elder |
+| 兴趣 | list[str] | ❌ | 兴趣标签 |
+| 语言 | str | ❌ | 语言代码，如 `zh-CN` |
+
+---
 
 ## orchestration.json — 模型编排
 
-```json
-{
-  "chat_model": "deepseek-chat",
-  "analysis_model": "deepseek-chat",
-  "vision_model": null,
-  "proactive_model": "deepseek-chat",
-  "embedding_model": null
-}
-```
+在 **模型编排** 页面操作。
 
-| 字段 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `chat_model` | str | (必填) | 对话生成模型名 |
-| `analysis_model` | str | (必填) | 认知分析模型名（建议用轻量模型） |
-| `vision_model` | str | `null` | 图片理解模型名（可选） |
-| `proactive_model` | str | 同 chat | 主动发起的模型名 |
-| `embedding_model` | str | `null` | 覆盖全局嵌入模型（可选） |
+### 通用模型
 
-模型名需与 Provider 配置中的名称对应（如 `deepseek-chat`、`Qwen/Qwen2.5-7B-Instruct`）。
+| 字段 | 默认值 | 说明 |
+|------|--------|------|
+| 分析模型 | (必填) | 认知分析、记忆提取使用的模型 |
+| 对话模型 | (必填) | 回复生成、主动发言、被动技能、GitHub 通知的模型 |
+| 记忆维护模型 | 同 analysis | 日记生成/合并、传记蒸馏/更新的模型 |
+| 插件模型 | 同 analysis | 插件生成/分析/渲染/原生调用的模型 |
+
+### 任务级覆盖
+
+每个子任务可单独配置 model、temperature、max_tokens，通过点击 ⚙ 展开高级面板。
+
+可覆盖的任务：`cognition_analyze`、`memory_extract`、`response_generate`、`proactive_generate`、`passive_skill`、`github_monitor_notify`、`diary_generate`、`diary_consolidate`、`biography_distill`、`biography_update`、`plugin_generate`、`plugin_analyze`、`plugin_render`、`plugin_raw`。
+
+完整列表参见 [引擎架构](/guide/engine-architecture)。
+
+---
 
 ## adapters.json — 平台适配器
 
-```json
-{
-  "adapters": [
-    {
-      "type": "napcat",
-      "ws_url": "ws://127.0.0.1:3001",
-      "qq": 123456789,
-      "ws_token": "your-token",
-      "group_whitelist": [],
-      "private_whitelist": [],
-      "peer_ai_ids": []
-    }
-  ]
-}
-```
+在 **适配器** 页面配置。
 
-| 字段 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `type` | str | `"napcat"` | 适配器类型 |
-| `ws_url` | str | ❌ | NapCat WebSocket 地址 |
-| `qq` | int | ❌ | QQ 号 |
-| `ws_token` | str | ❌ | WebSocket 认证 token |
-| `group_whitelist` | list[int] | `[]` | 群聊白名单（空=不限制） |
-| `private_whitelist` | list[int] | `[]` | 私聊白名单（空=不限制） |
-| `peer_ai_ids` | list[int] | `[]` | 群中其他 AI 的 QQ 号 |
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| 适配器类型 | str | `napcat` |
+| WS 地址 | str | NapCat WebSocket 地址 |
+| QQ | int | 账号 |
+| WS Token | str | 认证 token |
+| 群聊白名单 | list[int] | 留空不限制 |
+| 私聊白名单 | list[int] | 留空不限制 |
+| 其他 AI 账号 | list[int] | 群中其他 AI 的 QQ，避免互相回复 |
+
+---
 
 ## experience.json — 体验参数
 
-```json
-{
-  "sensitivity": 0.7,
-  "reply_frequency": "normal",
-  "proactive_behavior": "low",
-  "memory_depth": 5,
-  "skill_timeout": 30.0,
-  "plugin_timeout": 30.0,
-  "max_response_tokens": 512,
-  "temperature": 0.8,
-  "cooldown_seconds": 5.0,
-  "private_chat_reply_always": true,
-  "cross_group_memory": true,
-  "send_stickers": true,
-  "log_inner_thoughts": false
-}
-```
+在 **体验参数** 页面微调。
 
-| 字段 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `sensitivity` | float (0-1) | `0.7` | 回复敏感度 |
-| `reply_frequency` | str | `"normal"` | `high` / `normal` / `selective` |
-| `proactive_behavior` | str | `"low"` | 主动发起对话强度 |
-| `memory_depth` | int | `5` | 携带的历史消息数 |
-| `skill_timeout` | float | `30.0` | 技能执行超时（秒） |
-| `plugin_timeout` | float | `30.0` | 插件执行超时（秒） |
-| `max_response_tokens` | int | `512` | 单次回复最大 token |
-| `temperature` | float | `0.8` | 模型随机性（0-2） |
-| `cooldown_seconds` | float | `5.0` | 群聊回复冷却 |
-| `private_chat_reply_always` | bool | `true` | 私聊是否实时回复 |
-| `cross_group_memory` | bool | `true` | 启用跨群记忆 |
-| `send_stickers` | bool | `true` | 自动发送表情包 |
-| `log_inner_thoughts` | bool | `false` | 记录内心活动 |
-
-### reply_frequency 效果
-
-| 值 | engine 行为 |
-|----|------------|
-| `high` | 降低回复阈值，更频繁地参与对话 |
-| `normal` | 标准行为 |
-| `selective` | 提高阈值，仅高相关度时回复 |
+| 字段 | 默认值 | 说明 |
+|------|--------|------|
+| 参与灵敏度 | `0.5` | 0~1，越高越容易参与对话 |
+| 回复模式 | `auto` | auto / always / never |
+| 活泼度 | `0.5` | 0~1，控制语气活泼程度 |
+| 主动行为 | `true` | 是否主动发起对话 |
+| 主动间隔 | `300` (s) | 主动发言最小间隔 |
+| 延迟回复 | `true` | 是否等待确认窗口 |
+| 最小回复间隔 | `0` (s) | 两次回复最小间隔 |
+| 回复频率窗口 | `60` (s) | 频率统计窗口 |
+| 窗口内最大回复数 | `8` | 窗口内最多回复数 |
+| 被名时豁免 | `true` | 被@或叫名字时跳过频率限制 |
+| 自动表情包 | `true` | 是否自动发送表情包 |
+| 技能超时 | `30` (s) | 技能执行超时 |
+| 插件超时 | `30` (s) | 插件执行超时 |
