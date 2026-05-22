@@ -4,29 +4,21 @@
 
 ## 工作原理
 
-```
-用户发送: "/weather 北京 --format=json"
-  │
-  ▼
-Tokenize → Lex → Parse → Match
-  │         │       │        │
-  │         │       │        └─ PluginMatcher: 匹配哪个插件
-  │         │       └─ CommandParser: 构建 CommandAST
-  │         └─ Lexer: Token → 结构化命令
-  └─ Tokenizer: 文本 → Token 序列
-  │
-  ▼
-PluginExecutor.execute()
-  ├─ 权限校验（developer_only / group_blacklist）
-  ├─ 速率限制（rate_limit_calls_per_minute）
-  ├─ 实例化插件 / 复用已有实例
-  └─ PluginBase.execute_async(cmd)
-       │
-       ▼
-OutputDispatcher.dispatch()
-  ├─ direct: 直接输出结果文本
-  ├─ llm: 用 AI 人格化输出
-  └─ silent: 静默执行，无输出
+```mermaid
+flowchart TB
+    A["用户发送: /weather 北京 --format=json"] --> B[Tokenizer<br>文本 → Token 序列]
+    B --> C[Lexer<br>Token → 结构化命令]
+    C --> D[CommandParser<br>构建 CommandAST]
+    D --> E[PluginMatcher<br>匹配哪个插件]
+    E --> F[PluginExecutor.execute]
+    F --> F1[权限校验<br>developer_only / group_blacklist]
+    F --> F2[速率限制<br>rate_limit_calls_per_minute]
+    F --> F3[实例化插件 / 复用已有实例]
+    F --> F4[PluginBase.execute_async]
+    F4 --> G[OutputDispatcher.dispatch]
+    G --> G1[direct: 直接输出结果文本]
+    G --> G2[llm: 用 AI 人格化输出]
+    G --> G3[silent: 静默执行，无输出]
 ```
 
 ## 关键概念
@@ -81,36 +73,36 @@ class MyPlugin(PluginBase):
 
 ## 系统架构
 
-```
-CommandAST（结构化命令数据）
-  │
-  ├─ PluginRegistry（多维度索引）
-  │     ├─ _commands_index: [(pattern, type, plugin, cmd_meta)]
-  │     ├─ _events_index: [PluginDefinition]
-  │     └─ match_message(text) → MatchResult
-  │
-  ├─ PluginLoader（加载器）
-  │     ├─ 扫描 plugins/ 目录
-  │     ├─ import_plugin_class() → 找到 PluginBase 子类
-  │     ├─ PluginDefinition.from_class() → 构建定义
-  │     └─ 安装依赖（AST 解析 _plugin_dependencies）
-  │
-  ├─ PluginExecutor（执行器）
-  │     ├─ 权限校验（_check_permissions）
-  │     ├─ 速率限制（_check_rate_limit）
-  │     ├─ PluginContext.create(engine, adapter, ...)
-  │     ├─ PluginBase.execute_async(cmd)
-  │     └─ 超时保护
-  │
-  ├─ OutputDispatcher（输出调度）
-  │     ├─ direct → 直接输出
-  │     ├─ llm → engine.brain.generate_text()
-  │     └─ silent → 无输出
-  │
-  └─ PluginConfigManager（配置管理）
-        ├─ 启用/禁用
-        ├─ 权限配置
-        └─ 热重载
+```mermaid
+flowchart TB
+    A[CommandAST<br>结构化命令数据] --> B[PluginRegistry<br>多维度索引]
+    A --> C[PluginLoader<br>加载器]
+    A --> D[PluginExecutor<br>执行器]
+    A --> E[OutputDispatcher<br>输出调度]
+    A --> F[PluginConfigManager<br>配置管理]
+
+    B --> B1["_commands_index:<br>(pattern, type, plugin, cmd_meta)"]
+    B --> B2["_events_index:<br>[PluginDefinition]"]
+    B --> B3["match_message(text)<br>→ MatchResult"]
+
+    C --> C1[扫描 plugins/ 目录]
+    C --> C2[import_plugin_class<br>找到 PluginBase 子类]
+    C --> C3["PluginDefinition.from_class()<br>构建定义"]
+    C --> C4["安装依赖<br>AST 解析 _plugin_dependencies"]
+
+    D --> D1["权限校验<br>_check_permissions"]
+    D --> D2["速率限制<br>_check_rate_limit"]
+    D --> D3["PluginContext.create<br>engine, adapter, ..."]
+    D --> D4["PluginBase.execute_async<br>cmd"]
+    D --> D5[超时保护]
+
+    E --> E1["direct<br>直接输出"]
+    E --> E2["llm<br>engine.brain.generate_text()"]
+    E --> E3["silent<br>无输出"]
+
+    F --> F1[启用/禁用]
+    F --> F2[权限配置]
+    F --> F3[热重载]
 ```
 
 ## 与技能的对比

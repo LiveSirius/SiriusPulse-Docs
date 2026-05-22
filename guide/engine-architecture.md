@@ -19,57 +19,55 @@ class EmotionalGroupChatEngine(
 
 每条消息经过完整的 5 阶段处理：
 
-```
-消息到达
-  │
-  ▼
-┌──────────────────────────────────────────────┐
-│ 1. Perception（感知）                          │
-│   ├── 身份解析（IdentityResolver）              │
-│   ├── 用户登记（UserManager）                   │
-│   ├── 写入 basic_memory                        │
-│   └── 更新时间戳                                │
-└───────────────┬──────────────────────────────┘
-                │
-                ▼
-┌──────────────────────────────────────────────┐
-│ 2. Cognition（认知）                           │
-│   ├── 情绪分析（emotion）                       │
-│   ├── 意图识别（intent classification）         │
-│   ├── 共情度计算（empathy）                     │
-│   ├── 语义记忆检索（semantic_memory.search）     │
-│   └── 日记检索（diary retrieval）               │
-└───────────────┬──────────────────────────────┘
-                │
-                ▼
-┌──────────────────────────────────────────────┐
-│ 3. Decision（决策）                            │
-│   ├── 插件快速路径（PLUGIN_COMMAND 意图）        │
-│   ├── 动态阈值计算（ThresholdEngine）            │
-│   ├── 策略选择（StrategyEngine）                 │
-│   ├── 冷却检测（cooldown check）                 │
-│   └── 私聊兜底（private chat floor）            │
-│                                                 │
-│   策略类型：IMMEDIATE / DELAYED / SILENT / PLUGIN│
-└───────────────┬──────────────────────────────┘
-                │
-                ▼
-┌──────────────────────────────────────────────┐
-│ 4. Execution（执行）                           │
-│   ├── PLUGIN: 执行插件命令                      │
-│   ├── IMMEDIATE/DELAYED: 入延迟队列             │
-│   ├── 节奏缺口抑制（RhythmAnalyzer）             │
-│   ├── 过热抑制（overheat suppression）          │
-│   └── 短消息抑制（short message filter）        │
-└───────────────┬──────────────────────────────┘
-                │ 延迟队列释放后
-                ▼
-┌──────────────────────────────────────────────┐
-│ 5. Background（后台更新）                       │
-│   ├── 氛围更新（atmosphere update）              │
-│   ├── 名称记录                                  │
-│   └── 用户内容累积                              │
-└──────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    A[消息到达] --> B
+
+    subgraph B[1. Perception 感知]
+        B1[身份解析 IdentityResolver]
+        B2[用户登记 UserManager]
+        B3[写入 basic_memory]
+        B4[更新时间戳]
+    end
+
+    B --> C
+
+    subgraph C[2. Cognition 认知]
+        C1[情绪分析 emotion]
+        C2["意图识别 intent classification"]
+        C3[共情度计算 empathy]
+        C4["语义记忆检索 semantic_memory.search"]
+        C5[日记检索 diary retrieval]
+    end
+
+    C --> D
+
+    subgraph D[3. Decision 决策]
+        D1["插件快速路径 PLUGIN_COMMAND 意图"]
+        D2["动态阈值计算 ThresholdEngine"]
+        D3["策略选择 StrategyEngine"]
+        D4[冷却检测 cooldown check]
+        D5["私聊兜底 private chat floor"]
+        D6["策略类型：IMMEDIATE / DELAYED / SILENT / PLUGIN"]
+    end
+
+    D --> E
+
+    subgraph E[4. Execution 执行]
+        E1["PLUGIN: 执行插件命令"]
+        E2["IMMEDIATE/DELAYED: 入延迟队列"]
+        E3["节奏缺口抑制 RhythmAnalyzer"]
+        E4["过热抑制 overheat suppression"]
+        E5["短消息抑制 short message filter"]
+    end
+
+    E -->|"延迟队列释放后"| F
+
+    subgraph F[5. Background 后台更新]
+        F1["氛围更新 atmosphere update"]
+        F2[名称记录]
+        F3[用户内容累积]
+    end
 ```
 
 ## 核心子系统

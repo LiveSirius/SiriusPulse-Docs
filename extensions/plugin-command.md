@@ -4,46 +4,27 @@
 
 ## 解析流水线
 
-```
-用户输入: "  /weather Beijing --format=json -v"
-  │
-  ▼
-┌─────────────────────────────────────┐
-│ 1. Tokenizer（词法分析）             │
-│    "  /weather Beijing --format=json -v"
-│    → [WS, CMD_HEAD("weather"), WS,  │
-│       ARG_VALUE("Beijing"), WS,      │
-│       LONG_OPT("format"), EQ,        │
-│       ARG_VALUE("json"), WS,         │
-│       SHORT_OPT("v")]               │
-└──────────────┬──────────────────────┘
-               │
-               ▼
-┌─────────────────────────────────────┐
-│ 2. Lexer（语法分析）                 │
-│    Tokens → LexedCommand             │
-│    {                                 │
-│      command: "weather",             │
-│      prefix: "/",                    │
-│      positional_args: ["Beijing"],   │
-│      named_args: {"format": "json"}, │
-│      flags: {"v"},                   │
-│      raw_text: "..."                 │
-│    }                                │
-└──────────────┬──────────────────────┘
-               │
-               ▼
-┌─────────────────────────────────────┐
-│ 3. CommandParser（命令解析）          │
-│    LexedCommand + PluginDefinition   │
-│    → CommandAST                      │
-│    {                                 │
-│      command: "weather",             │
-│      args: [ArgNode("Beijing")],     │
-│      kwargs: {"format": ArgNode("json")},│
-│      flags: {"v"}                    │
-│    }                                │
-└─────────────────────────────────────┘
+```mermaid
+flowchart TB
+    A["用户输入: /weather Beijing --format=json -v"] --> B
+
+    subgraph B["1. Tokenizer 词法分析"]
+        B1["Tokens 序列:<br>[WS, CMD_HEAD('weather'), WS,<br>ARG_VALUE('Beijing'), WS,<br>LONG_OPT('format'), EQ,<br>ARG_VALUE('json'), WS,<br>SHORT_OPT('v')]"]
+    end
+
+    B --> C
+
+    subgraph C["2. Lexer 语法分析"]
+        C1["Tokens → LexedCommand"]
+        C2["command: 'weather'<br>prefix: '/'<br>positional_args: ['Beijing']<br>named_args: {'format': 'json'}<br>flags: {'v'}<br>raw_text: '...'"]
+    end
+
+    C --> D
+
+    subgraph D["3. CommandParser 命令解析"]
+        D1["LexedCommand + PluginDefinition → CommandAST"]
+        D2["command: 'weather'<br>args: [ArgNode('Beijing')]<br>kwargs: {'format': ArgNode('json')}<br>flags: {'v'}"]
+    end
 ```
 
 ## 1. Tokenizer — 词法分析

@@ -4,17 +4,17 @@
 
 ## 系统架构
 
-```
-PersonaManager（主进程）
-  ├── 扫描 data/personas/ 目录
-  ├── 端口分配（每人格独立 NapCat WS 端口）
-  ├── 启停调度
-  └── PersonaWorker（子进程，独立控制台窗口）
-        ├── PersonaConfig（配置加载）
-        ├── EngineRuntime（引擎封装）
-        │     └── EmotionalGroupChatEngine
-        ├── NapCatAdapter（平台适配）
-        └── 心跳 / 状态监控
+```mermaid
+flowchart TB
+    A["PersonaManager<br>（主进程）"] --> A1[扫描 data/personas/ 目录]
+    A --> A2["端口分配<br>每人格独立 NapCat WS 端口"]
+    A --> A3[启停调度]
+    A --> A4["PersonaWorker<br>（子进程，独立控制台窗口）"]
+    A4 --> B1["PersonaConfig<br>配置加载"]
+    A4 --> B2["EngineRuntime<br>引擎封装"]
+    B2 --> B2a["EmotionalGroupChatEngine"]
+    A4 --> B3["NapCatAdapter<br>平台适配"]
+    A4 --> B4["心跳 / 状态监控"]
 ```
 
 ## 人格数据目录
@@ -131,13 +131,29 @@ sirius-pulse persona remove 小星
 
 ## 生命周期
 
-```
-创建 → 配置 → 启动 → 运行中（可热重载配置）→ 停止 → 删除
-        │                │
-        └── WebUI 编辑 ──┘
-```
+```mermaid
+flowchart LR
+    A[创建] --> B[配置]
+    B --> C[启动]
+    C --> D[运行中<br>可热重载配置]
+    D --> E[停止]
+    E --> F[删除]
+    B -.-> G[WebUI 编辑]
+    D -.-> G
 
-- **启动**: `start()` → 加载配置 → 构建引擎 → 连接适配器 → 心跳循环
-- **运行**: 引擎处理消息、记忆更新、日记归档、主动行为
-- **停止**: `shutdown()` → 断开适配器 → 保存状态 → 清理资源
-- **热重载**: 支持通过 WebUI 修改配置后不重启生效
+    C --> C1["start()"]
+    C1 --> C2[加载配置]
+    C2 --> C3[构建引擎]
+    C3 --> C4[连接适配器]
+    C4 --> C5[心跳循环]
+
+    D --> D1[引擎处理消息]
+    D --> D2[记忆更新]
+    D --> D3[日记归档]
+    D --> D4[主动行为]
+
+    E --> E1["shutdown()"]
+    E1 --> E2[断开适配器]
+    E2 --> E3[保存状态]
+    E3 --> E4[清理资源]
+```

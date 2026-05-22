@@ -31,20 +31,27 @@ python scripts/ci_check.py
 
 ## 项目结构
 
-```
-sirius_pulse/
-├── core/          # 核心引擎（管线、prompt、策略）
-├── memory/        # 记忆系统（basic / diary / semantic / biography）
-├── skills/        # 技能系统（registry / executor + builtin）
-├── plugins/       # 插件系统（registry / executor / loader）
-├── providers/     # LLM Provider 实现
-├── platforms/     # 平台适配器（NapCat / OneBot）
-├── config/        # 配置管理
-├── models/        # 数据模型
-├── webui/         # Web 管理界面
-├── embedding/     # 嵌入微服务
-├── token/         # Token 统计
-└── utils/         # 工具函数
+```mermaid
+flowchart LR
+    A[sirius_pulse] --> B[core<br>核心引擎]
+    A --> C[memory<br>记忆系统]
+    A --> D[skills<br>技能系统]
+    A --> E[plugins<br>插件系统]
+    A --> F[providers<br>LLM Provider]
+    A --> G[platforms<br>平台适配器]
+    A --> H[config<br>配置管理]
+    A --> I[models<br>数据模型]
+    A --> J[webui<br>Web 管理界面]
+    A --> K[embedding<br>嵌入微服务]
+    A --> L[token<br>Token 统计]
+    A --> M[utils<br>工具函数]
+
+    C --> C1[basic]
+    C --> C2[diary]
+    C --> C3[semantic]
+    C --> C4[biography]
+
+    G --> G1["NapCat / OneBot"]
 ```
 
 ## 代码规范

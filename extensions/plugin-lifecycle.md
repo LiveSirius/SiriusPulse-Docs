@@ -4,15 +4,13 @@
 
 ## 生命周期
 
-```
-discover → load_definition → register → instantiate → execute → unload
-   │            │               │            │            │         │
-   │            │               │            │            │         └─ on_unload()
-   │            │               │            │            └─ execute_async()
-   │            │               │            └─ on_load() + PluginContext
-   │            │               └─ PluginRegistry.register()
-   │            └─ PluginLoader.load_definition()
-   └─ PluginLoader.discover()
+```mermaid
+flowchart LR
+    A[discover<br>PluginLoader.discover] --> B[load_definition<br>PluginLoader.load_definition]
+    B --> C[register<br>PluginRegistry.register]
+    C --> D[instantiate<br>实例化 + on_load + PluginContext]
+    D --> E[execute<br>execute_async]
+    E --> F[unload<br>on_unload]
 ```
 
 ### 详细阶段
