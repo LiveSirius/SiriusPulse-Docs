@@ -14,6 +14,7 @@ export default defineConfig({
     nav: [
       { text: '首页', link: '/' },
       { text: '指南', link: '/guide/', activeMatch: '/guide/' },
+      { text: '扩展开发', link: '/extensions/', activeMatch: '/extensions/' },
       { text: '参考', link: '/reference/', activeMatch: '/reference/' },
     ],
 
@@ -33,13 +34,32 @@ export default defineConfig({
             { text: '人格系统', link: '/guide/persona-system' },
             { text: '引擎架构', link: '/guide/engine-architecture' },
             { text: '记忆系统', link: '/guide/memory-system' },
-            { text: '技能系统', link: '/guide/skill-system' },
           ],
         },
         {
           text: '平台接入',
           items: [
             { text: 'NapCat / OneBot', link: '/guide/platform-napcat' },
+          ],
+        },
+      ],
+      '/extensions/': [
+        {
+          text: '技能系统 (Skills)',
+          items: [
+            { text: '技能系统总览', link: '/extensions/skill-overview' },
+            { text: '编写自定义技能', link: '/extensions/skill-authoring' },
+            { text: '内置技能参考', link: '/extensions/skill-builtin' },
+            { text: '被动技能开发', link: '/extensions/skill-passive' },
+          ],
+        },
+        {
+          text: '插件系统 (Plugins)',
+          items: [
+            { text: '插件系统总览', link: '/extensions/plugin-overview' },
+            { text: '编写自定义插件', link: '/extensions/plugin-authoring' },
+            { text: '指令系统详解', link: '/extensions/plugin-command' },
+            { text: '生命周期与上下文', link: '/extensions/plugin-lifecycle' },
           ],
         },
       ],
@@ -63,8 +83,6 @@ export default defineConfig({
           text: '开发',
           items: [
             { text: '开发指南', link: '/reference/development' },
-            { text: '编写技能', link: '/reference/skill-authoring' },
-            { text: '编写插件', link: '/reference/plugin-authoring' },
           ],
         },
       ],

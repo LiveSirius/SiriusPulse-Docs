@@ -1,0 +1,132 @@
+# 技能系统总览
+
+技能（Skill）是 Sirius Pulse 最核心的扩展机制。AI 模型可以在对话中**自主决定**何时调用技能来获取信息或执行操作。
+
+## 工作原理
+
+```
+用户消息： "帮我查一下今天深圳天气"
+  │
+  ▼
+认知分析 → AI 决定需要查天气
+  │
+  ▼
+AI 在回复文本中插入 SKILL_CALL 标记：
+  "让我来查查。[SKILL_CALL: bing_search | {"query": "深圳天气 2026-05-22"}]
+  │
+  ▼
+parse_skill_calls() 提取标记 → SkillExecutor.execute()
+  │
+  ▼
+技能执行结果注入到模型上下文
+  │
+  ▼
+AI 用自然语言整合结果：
+  "今天深圳天气晴朗，最高温30°C，适合户外活动哦~"
+```
+
+## 关键概念
+
+### SKILL_CALL 标记
+
+技能调用的核心协议，格式为：
+
+```
+[SKILL_CALL: 技能名称 | {"参数名": "参数值"}]
+```
+
+AI 模型会在它认为需要调用技能时，自然地在回复文本中插入此标记。引擎会自动解析、执行并将结果反馈给模型。
+
+### 技能链（Skill Chain）
+
+同一轮对话中可以调用多个技能，后一个技能可以引用前一个技能的结果：
+
+```
+[SKILL_CALL: file_list | {"path": "docs"}]
+[SKILL_CALL: file_read | {"path": "${file_list.results[0].name}"}]
+```
+
+`${skill_name.field}` 语法可以引用链上前置技能的结果。
+
+### 技能分类
+
+| 类型 | 描述 | 示例 |
+|------|------|------|
+| **普通技能** | 被 AI 主动调用，有 `run` 函数 | `bing_search`、`file_read` |
+| **被动技能** | 自动运行，无需 AI 调用 | `reminder`（后台检查）、`github_monitor`（轮询） |
+| **混合技能** | 既可以被调用，也有后台任务 | `reminder` |
+| **适配器绑定技能** | 需要特定平台 adapter | `send_image`（NapCat） |
+
+## 系统架构
+
+```
+SkillRegistry                   SkillExecutor
+  │                               │
+  ├─ 加载内置技能 (builtin/)       ├─ 参数校验
+  ├─ 加载用户技能 (skills/*.py)    ├─ 类型转换
+  ├─ 构建工具描述 (LLM prompt)     ├─ 权限校验
+  └─ 按名查找                      ├─ 依赖注入
+      │                           │    ├─ data_store
+      │                           │    ├─ bridge (adapter)
+      │                           │    └─ chat_context
+      │                           ├─ 执行 run 函数
+      │                           ├─ 遥测记录
+      │                           └─ SkillChainContext 存储
+```
+
+## 数据流
+
+```
+[SKILL_CALL: name | {params}]
+  │
+  ├─> parse_skill_calls(text)          → 提取所有 SKILL_CALL
+  │
+  ├─> SkillRegistry.get(name)           → 查找 SkillDefinition
+  │
+  ├─> SkillExecutor.execute()           → 执行
+  │     ├─ SkillChainContext.resolve_templates() → ${} 引用解析
+  │     ├─ 必填参数检查
+  │     ├─ _coerce_type() → 类型转换（int/float/bool/list）
+  │     ├─ validate_skill_access() → developer_only 权限
+  │     ├─ 注入 data_store / bridge / chat_context
+  │     ├─ skill._run_func(**params) → 实际调用
+  │     └─ SkillDataStore.save() → 持久化
+  │
+  ├─> SkillChainContext.store(name, result) → 链上下文缓存
+  │
+  └─> SkillResult → AI 可读文本 → 注入 prompt
+```
+
+## 内置技能一览
+
+| 技能 | 功能 | 类型 |
+|------|------|------|
+| `bing_search` | 必应网页搜索 | 普通 |
+| `url_content_reader` | 网页内容提取 | 普通 |
+| `desktop_screenshot` | 桌面截图（dev only） | 普通 |
+| `system_info` | 系统信息查询 | 普通 |
+| `reminder` | 定时提醒（创建/列表/取消） | 混合 |
+| `github_monitor` | GitHub 仓库事件监控 | 被动 |
+| `learn_term` | 学习新术语 | 普通（silent） |
+| `file_read` | 读取工作区文件 | 普通 |
+| `file_write` | 写入工作区文件 | 普通 |
+| `file_list` | 列出工作区文件 | 普通 |
+| `send_image` | 发送图片到对话 | 适配器绑定 |
+| `upload_file` | 上传文件到对话 | 适配器绑定 |
+| `send_workspace_file` | 发送工作区文件 | 适配器绑定 |
+
+## 与插件的对比
+
+| | 技能 | 插件 |
+|---|---|---|
+| **调用者** | AI 决定何时调用 | 用户显式命令 |
+| **语法** | `[SKILL_CALL: ...]` | `/command args` |
+| **输出** | 反馈给 AI 做自然语言整合 | 直接/LLM 人格化/静默 |
+| **开发** | 写一个 `run` 函数 | 继承 `PluginBase` |
+| **适用** | AI 需要工具完成任务 | 用户需要固定功能命令 |
+
+## 下一步
+
+- [编写自定义技能](./skill-authoring) — 从零创建一个技能
+- [内置技能参考](./skill-builtin) — 所有内置技能的详细文档
+- [被动技能开发](./skill-passive) — 后台任务和事件驱动技能
