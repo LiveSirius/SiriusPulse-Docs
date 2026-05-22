@@ -2,13 +2,36 @@
 
 插件通过继承 `PluginBase` 并使用 `@command` 装饰器来定义指令。
 
+## 统一 API 入口
+
+框架提供了 `sirius_pulse.plugins.api` 作为插件开发的统一导入入口，所有插件开发所需的类型和工具都可以从这里导入：
+
+```python
+from sirius_pulse.plugins.api import (
+    PluginBase,               # 插件基类（所有插件必须继承）
+    command,                  # 声明式指令注册装饰器
+    PluginResponse,           # 返回结果
+    PluginContext,            # 运行时上下文
+    EngineProxy,              # 引擎安全代理
+    PluginDataStore,          # 持久化 KV 存储
+    CommandAST,               # 指令抽象语法树
+    PluginCommandMeta,        # @command 装饰器记录的元数据
+    RenderMode,               # 输出策略枚举
+    TriggerType,              # 触发方式枚举
+    PatternType,              # 匹配模式枚举
+)
+```
+
+这样就不需要记忆分散在 `sirius_pulse.plugins.models`、`sirius_pulse.plugins.context` 等不同模块的导入路径了。
+
+> 每个 API 的详细说明见 [Plugins API 参考](../api/plugins-api)。
+
 ## 快速上手
 
 创建一个目录 `plugins/my_plugin/`，放入 `__init__.py`：
 
 ```python
-from sirius_pulse.plugins import PluginBase, command
-from sirius_pulse.plugins.models import PluginResponse
+from sirius_pulse.plugins.api import PluginBase, command, PluginResponse
 
 class MyWeatherPlugin(PluginBase):
     """天气查询插件"""
@@ -207,8 +230,7 @@ async def ban(self, user: str) -> PluginResponse:
 
 ```python
 import random
-from sirius_pulse.plugins import PluginBase, command
-from sirius_pulse.plugins.models import PluginResponse
+from sirius_pulse.plugins.api import PluginBase, command, PluginResponse
 
 class DicePlugin(PluginBase):
     """骰子插件"""

@@ -2,6 +2,30 @@
 
 自定义技能是最简单的扩展方式：只需写一个 Python 文件，定义 `SKILL_META` 和 `run` 函数，放入 skills 目录即可。
 
+## 统一 API 入口
+
+框架提供了 `sirius_pulse.skills.api` 作为技能开发的统一导入入口，所有技能开发所需的类型和工具函数都可以从这里导入：
+
+```python
+from sirius_pulse.skills.api import (
+    SkillResult,              # 结构化返回结果
+    SkillEngineContext,       # 被动/后台技能的引擎上下文 Protocol
+    SkillInvocationContext,   # 调用者身份信息
+    SkillChainContext,        # Skill Chaining 上下文
+    BackgroundTaskSpec,       # 后台任务规格
+    TriggerSpec,              # 事件触发规格
+    SkillPassiveType,         # 被动技能类型枚举
+    SkillParameter,           # 技能参数定义
+    SkillDataStore,           # 持久化 KV 存储
+    strip_skill_calls,        # 移除 SKILL_CALL 标记
+    ensure_developer_access,  # 开发者权限检查
+)
+```
+
+这样就不需要记忆分散在 `sirius_pulse.skills.models`、`sirius_pulse.skills.data_store`、`sirius_pulse.skills.executor` 等不同模块的导入路径了。
+
+> 每个 API 的详细说明见 [Skills API 参考](../api/skills-api)。
+
 ## 快速上手
 
 创建一个文件 `skills/my_skill.py`：

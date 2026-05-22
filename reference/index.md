@@ -12,3 +12,6 @@
 
 - [Python API](./python-api)
 - [WebUI API](./webui-api)
+- [Skills API](../api/skills-api)
+- [Plugins API](../api/plugins-api)
+- [AI API 参考](../api/ai-api)
