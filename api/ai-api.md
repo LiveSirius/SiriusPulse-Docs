@@ -683,24 +683,183 @@ class MyPlugin(PluginBase):
 
 ---
 
-## 3. 快速对比
+## 3. Brain Hooks
 
-| 特性 | Skills | Plugins |
-|---|---|---|
-| **触发方式** | AI 通过 `[SKILL_CALL: name]` 调用 | 用户通过前缀命令 `/cmd` 触发 |
-| **编写方式** | 一个 `.py` 文件 + `SKILL_META` + `run()` | 一个目录 + `PluginBase` 子类 + `@command` |
-| **返回值** | `dict`（自动归一化为 SkillResult） | `PluginResponse` |
-| **数据持久化** | `data_store` 自动注入 | `self.ctx.data_store` |
-| **后台任务** | `create_background_tasks(ctx)` | `_plugin_schedule` / `_plugin_events` |
-| **AI 参与** | 由 AI 决定何时调用 | 用户直接输入触发 |
-| **统一入口** | `sirius_pulse.skills.api` | `sirius_pulse.plugins.api` |
+**导入路径：** `sirius_pulse.core.brain`（或顶层 `from sirius_pulse import PreHook, PostHook`）
+
+Brain 是 LLM 交互中枢，提供 PreHook / PostHook 双通道扩展机制，允许外部代码在 LLM 生成前后介入处理。
+
+### 3.1 导入方式
+
+```python
+from sirius_pulse import PreHook, PostHook, ChatRequest, ChatResult, Brain
+```
+
+### 3.2 类型定义
+
+#### PreHook
+| | |
+|---|---|
+| **源文件** | `sirius_pulse/core/brain.py`（第 117 行） |
+| **签名** | `PreHook = Callable[["Brain", ChatRequest, dict[str, Any]], None]` |
+| **用途** | 在 LLM 调用前修改 ChatRequest（system_prompt、messages 等）或注入上下文 |
+| **ctx** | 跨 hook 共享的字典，内置步骤也通过它传递中间状态 |
+
+#### PostHook
+| | |
+|---|---|
+| **源文件** | `sirius_pulse/core/brain.py`（第 121 行） |
+| **签名** | `PostHook = Callable[["Brain", ChatRequest, ChatResult, dict[str, Any]], None]` |
+| **用途** | 在 LLM 调用后处理 ChatResult（修改 clean_text、sticker_names 等） |
+| **ctx** | 携带前处理阶段产生的中间状态（gen_request、estimated_tokens 等） |
+
+#### ChatRequest
+| | |
+|---|---|
+| **源文件** | `sirius_pulse/core/brain.py`（第 41 行） |
+| **类型** | `@dataclass(slots=True)` |
+| **字段** | `group_id: str` |
+| | `user_id: str` |
+| | `system_prompt: str` |
+| | `messages: list[dict[str, Any]]` |
+| | `task_name: str = "response_generate"` |
+| | `urgency: int = 0` |
+| | `temperature: float \| None = None` |
+| | `max_tokens: int \| None = None` |
+| | `style_params: StyleParams \| None = None` |
+| | `enable_skills: bool = True` |
+| | `caller_is_developer: bool = False` |
+| | `post_process: bool = False` — True 时启用 hook 调度 |
+| | `retry_max: int = 1` |
+| | `retry_delay: float = 1.0` |
+
+#### ChatResult
+| | |
+|---|---|
+| **源文件** | `sirius_pulse/core/brain.py`（第 78 行） |
+| **类型** | `@dataclass(slots=True)` |
+| **字段** | `raw_text: str` |
+| | `clean_text: str` |
+| | `model_name: str` |
+| | `duration_ms: float` |
+| | `token_record: Any` |
+| | `sticker_names: list[str]` |
+| | `has_skill_call: bool` |
+| | `skill_calls: list[tuple[str, dict]]` |
+
+### 3.3 注册 API
+
+```python
+def register_pre_hook(
+    self,
+    hook: PreHook,
+    priority: int = 0,         # 默认 0，值越大越晚执行
+    task_filter: set[str] | None = None,  # None=全量生效
+) -> None
+
+def register_post_hook(
+    self,
+    hook: PostHook,
+    priority: int = 100,       # 默认 100，值越大越晚执行
+    task_filter: set[str] | None = None,
+) -> None
+```
+
+**优先级阶梯（内置）：**
+```
+pre:    0  = 用户自定义（最早执行）
+       50  = 引擎内置
+post:   0   = 对话深度追踪
+       20   = 表情包发送
+       30   = 回复去重
+       40   = 记忆记录
+       50   = 回复时间戳 + 持久化
+      100   = 用户自定义（最后执行）
+```
+
+### 3.4 chat() 完整处理链
+
+```
+chat() 调用（asyncio.Lock 串行化）
+
+1. 用户 pre-hooks（按 priority 升序）
+   → 受 post_process + task_filter 双重控制
+
+2. 内置预处理（无条件执行）：
+   a. 人格注入（persona.build_system_prompt + 表情包提示）
+   b. 语气对齐
+   c. 当前时间注入
+   d. 模型路由
+   e. 风格覆盖（temperature/max_tokens）
+   f. 构建 GenerationRequest
+
+3. provider.generate_async()（带 transport 级重试）
+
+4. 内置后处理（无条件执行）：
+   a. XML 剥离（<conversation_history>）
+   b. SKIP 标签检测
+   c. SKILL_CALL 解析
+   d. 表情包标签解析
+   e. token 用量记录
+
+5. 用户 post-hooks（按 priority 升序）
+   → 受 post_process + task_filter 双重控制
+```
+
+### 3.5 使用示例
+
+```python
+from sirius_pulse import PreHook, PostHook, Brain
+
+# 前置 hook：注入额外指令
+def inject_short_style(brain: Brain, request: ChatRequest, ctx: dict) -> None:
+    request.system_prompt += "\n\n请用简短风格回复。"
+brain.register_pre_hook(inject_short_style, priority=0)
+
+# 后置 hook：记录生成耗时
+def log_duration(brain: Brain, request: ChatRequest, result: ChatResult, ctx: dict) -> None:
+    logger.info("[%s] 生成完成 %.1fms", request.task_name, result.duration_ms)
+brain.register_post_hook(log_duration, priority=100)
+
+# 限制仅在 response_generate 任务生效
+def group_only_hook(brain, request, result, ctx):
+    result.clean_text = f"[群{request.group_id}] {result.clean_text}"
+brain.register_post_hook(group_only_hook, priority=90, task_filter={"response_generate"})
+```
+
+### 3.6 注意事项
+
+| 要点 | 说明 |
+|---|---|
+| **hook 是同步函数** | 签名返回 `None`，不能直接 `await`。如需异步操作（如发送消息），使用 `asyncio.create_task` |
+| **post_process 总闸** | `ChatRequest.post_process=False` 时所有 hook 完全跳过（`generate_text()` 便捷方法默认关闭） |
+| **仅 chat() 通道生效** | `raw_call()` 通道没有任何 hook |
+| **引擎内置 hook** | 5 个 post-hooks（深度追踪/表情包/去重/记忆/时间戳），注册在 `engine_core.py` 的 `_register_engine_hooks()` 中 |
+| **外部注册** | 插件/技能代码若持有 `Brain` 实例可直接调用 `register_pre_hook()` / `register_post_hook()` |
+
+> 完整教程和示例见 [Brain API 参考](./brain-api)。
 
 ---
 
-## 4. 文件索引
+## 4. 快速对比
+
+| 特性 | Skills | Plugins | Brain Hooks |
+|---|---|---|
+| **触发方式** | AI 通过 `[SKILL_CALL: name]` 调用 | 用户通过前缀命令 `/cmd` 触发 | Brain 生命周期注入 |
+| **编写方式** | 一个 `.py` 文件 + `SKILL_META` + `run()` | 一个目录 + `PluginBase` 子类 + `@command` | 注册回调函数 |
+| **返回值** | `dict`（自动归一化为 SkillResult） | `PluginResponse` | 无（直接修改 ChatRequest/ChatResult） |
+| **数据持久化** | `data_store` 自动注入 | `self.ctx.data_store` | 无 |
+| **后台任务** | `create_background_tasks(ctx)` | `_plugin_schedule` / `_plugin_events` | 无 |
+| **AI 参与** | 由 AI 决定何时调用 | 用户直接输入触发 | 引擎内部，无用户感知 |
+| **统一入口** | `sirius_pulse.skills.api` | `sirius_pulse.plugins.api` | `sirius_pulse` 顶层 / `sirius_pulse.core.brain` |
+
+---
+
+## 5. 文件索引
 
 | 文件 | 用途 |
 |---|---|
+| `sirius_pulse/core/brain.py` | Brain 类 + PreHook/PostHook 类型 + ChatRequest/ChatResult |
 | `sirius_pulse/skills/api.py` | Skills 统一入口（re-export） |
 | `sirius_pulse/skills/models.py` | 数据模型定义 |
 | `sirius_pulse/skills/data_store.py` | KV 持久化存储 |

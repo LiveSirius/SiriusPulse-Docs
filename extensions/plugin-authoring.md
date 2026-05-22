@@ -271,3 +271,5 @@ class DicePlugin(PluginBase):
 
 - [指令系统详解](./plugin-command) — 理解完整的指令解析链路
 - [生命周期与上下文](./plugin-lifecycle) — 深入 PluginContext、EngineProxy
+
+> **进阶：** 框架还提供了 [Brain Hook 机制](../api/brain-api)，允许在 LLM 生成前后注入自定义逻辑。适合需要对引擎行为做全局拦截的开发者。

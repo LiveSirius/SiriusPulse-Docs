@@ -279,3 +279,5 @@ def run(query: str = "", count: int = 3, data_store=None, **kwargs) -> dict:
 - [内置技能参考](./skill-builtin) — 学习现有技能的写法
 - [被动技能开发](./skill-passive) — 创建后台运行或事件驱动的技能
 - [插件系统总览](./plugin-overview) — 了解另一种扩展方式
+
+> **进阶：** 框架还提供了 [Brain Hook 机制](../api/brain-api)，允许在 LLM 生成前后注入自定义逻辑。适合需要对引擎行为做全局拦截的开发者。

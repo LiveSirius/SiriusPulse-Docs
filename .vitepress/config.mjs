@@ -81,6 +81,7 @@ export default defineConfig({
             { text: 'Skills API', link: '/api/skills-api' },
             { text: 'Plugins API', link: '/api/plugins-api' },
             { text: 'AI API 参考', link: '/api/ai-api' },
+            { text: 'Brain API', link: '/api/brain-api' },
           ],
         },
         {
