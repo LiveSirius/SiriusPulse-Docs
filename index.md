@@ -7,8 +7,8 @@ hero:
   text: 异步角色扮演聊天框架
   tagline: 支持多人格 · 多平台 · 多模型
   image:
-    src: /favicon.svg
-    alt: Sirius Pulse
+    src: /yuebai.png
+    alt: Yuebai
   actions:
     - theme: brand
       text: 快速开始
