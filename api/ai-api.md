@@ -7,7 +7,7 @@
 ## 1. Skills API
 
 **导入路径：** `sirius_pulse/skills/api.py`
-**物理位置：** [sirius_pulse/skills/api.py](../../sirius_pulse/skills/api.py)
+**物理位置：** `sirius_pulse/skills/api.py`
 
 ### 1.1 导入方式
 
@@ -238,7 +238,7 @@ def create_on_unload(ctx: SkillEngineContext) -> None:
 ## 2. Plugins API
 
 **导入路径：** `sirius_pulse/plugins/api.py`
-**物理位置：** [sirius_pulse/plugins/api.py](../../sirius_pulse/plugins/api.py)
+**物理位置：** `sirius_pulse/plugins/api.py`
 
 ### 2.1 导入方式
 
