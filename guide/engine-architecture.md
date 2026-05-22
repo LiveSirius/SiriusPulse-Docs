@@ -36,7 +36,7 @@ flowchart TB
         C1[情绪分析 emotion]
         C2["意图识别 intent classification"]
         C3[共情度计算 empathy]
-        C4["语义记忆检索 semantic_memory.search"]
+        C4["用户画像获取 user_profile"]
         C5[日记检索 diary retrieval]
     end
 
@@ -66,7 +66,7 @@ flowchart TB
     subgraph F[5. Background 后台更新]
         F1["氛围更新 atmosphere update"]
         F2[名称记录]
-        F3[用户内容累积]
+        F3["交互统计 semantic record"]
     end
 ```
 
@@ -83,7 +83,8 @@ flowchart TB
 - 灵敏度设置（sensitivity）
 - 群聊热度（heat）
 - 消息速率（message_rate）
-- 用户画像（user_profile）
+- 用户互动率（engagement_rate）
+- 传记亲和力（biography affinity）
 - 人格回复频率偏置
 
 ### 策略引擎（ResponseStrategyEngine）
