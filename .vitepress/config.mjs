@@ -16,7 +16,7 @@ export default defineConfig({
   ],
 
   themeConfig: {
-    logo: '/favicon.svg',
+    logo: '/yuebai.png',
 
     nav: [
       { text: '首页', link: '/' },
