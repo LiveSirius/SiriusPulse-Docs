@@ -76,6 +76,8 @@ flowchart TB
 
 联合分析情绪和意图。输入最近 N 条历史消息 + 当前消息，输出 `IntentAnalysisV3` + `EmotionState`。
 
+认知分析器集成了传记系统的用户别名数据，当群聊中存在用户别称映射时（如 `"小明" → 张三`），会将这些信息注入 LLM prompt，帮助模型区分 AI 自身的别名和其他用户的别称，从而更准确地计算 `directed_score`（消息指向 AI 的程度）。
+
 ### 阈值引擎（ThresholdEngine）
 
 动态计算回复阈值，考虑因素：

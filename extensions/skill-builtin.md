@@ -162,6 +162,8 @@ run(action="cancel", reminder_id="xxx")  # 取消提醒
 
 检测到 Issue/PR/Release/Comment/Push 事件后，自动截图并生成通知。
 
+**Push 事件合并**：短时间内多次推送（如连续 `git push` 多个分支）会自动合并为一条通知，展示变更概览和 GitHub compare 链接，避免消息轰炸。
+
 **配置**：通过 WebUI 的 `skill_data/github_monitor.json` 管理监控列表。
 
 ## 学习与交互
