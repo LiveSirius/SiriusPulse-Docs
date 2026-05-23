@@ -71,6 +71,33 @@ class MyPlugin(PluginBase):
         ...
 ```
 
+### 定时事件 (PluginScheduler)
+
+插件可以注册定时触发的事件，通过 `_plugin_events` 属性定义 cron 表达式或固定间隔。系统启动时，PluginScheduler 会根据这些定义创建定时任务，在到期时调用插件的 `on_event()` 方法。支持失败退避和自动停用机制。
+
+| 字段 | 说明 | 示例 |
+|------|------|------|
+| `cron` | cron 表达式 | `"0 * * * *"` 每小时整点 |
+| `interval_seconds` | 固定间隔秒数 | `300` 每5分钟 |
+| `description` | 事件描述 | `"定时天气更新"` |
+
+```python
+from sirius_pulse.plugins import PluginBase, PluginEvent, PluginEventType
+
+class TimerPlugin(PluginBase):
+    _plugin_events = [
+        PluginEvent(
+            type=PluginEventType.SCHEDULE,
+            cron=None,
+            interval_seconds=60,
+            description="每分钟执行一次"
+        )
+    ]
+
+    async def on_event(self, event_type: str, event_data: dict):
+        print(f"事件触发: {event_type}, 数据: {event_data}")
+```
+
 ## 系统架构
 
 ```mermaid
@@ -95,6 +122,7 @@ flowchart TB
     D --> D3["PluginContext.create<br>engine, adapter, ..."]
     D --> D4["PluginBase.execute_async<br>cmd"]
     D --> D5[超时保护]
+    D --> G[PluginScheduler<br>定时任务调度]
 
     E --> E1["direct<br>直接输出"]
     E --> E2["llm<br>engine.brain.generate_text()"]
@@ -103,6 +131,10 @@ flowchart TB
     F --> F1[启用/禁用]
     F --> F2[权限配置]
     F --> F3[热重载]
+
+    G --> G1["cron 表达式"]
+    G --> G2["固定间隔"]
+    G --> G3["失败退避<br>自动停用"]
 ```
 
 ## 与技能的对比

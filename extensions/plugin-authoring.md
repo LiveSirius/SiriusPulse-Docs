@@ -10,6 +10,7 @@
 from sirius_pulse.plugins.api import (
     PluginBase,               # 插件基类（所有插件必须继承）
     command,                  # 声明式指令注册装饰器
+    DispatchedOutput,         # 调度后的输出结构
     PluginResponse,           # 返回结果
     PluginContext,            # 运行时上下文
     EngineProxy,              # 引擎安全代理
@@ -273,9 +274,17 @@ class DicePlugin(PluginBase):
 
 ```python
 class MyTimedPlugin(PluginBase):
-    _plugin_schedule = [
-        {"time": "08:00", "duration": 1440},  # 每日 8:00 触发，持续 24 小时
-        {"time": "22:00", "duration": 30},    # 每日 22:00 触发，持续 30 分钟
+    _plugin_events = [
+        PluginEvent(
+            type="timer.schedule",
+            cron="0 8 * * *",
+            description="每日定时上报",
+        ),
+        PluginEvent(
+            type="timer.schedule",
+            interval_seconds=1800,
+            description="状态健康检查",
+        ),
     ]
 ```
 
