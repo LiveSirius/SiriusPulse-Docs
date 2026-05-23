@@ -267,6 +267,20 @@ class DicePlugin(PluginBase):
             return PluginResponse.fail(f"格式错误: {e}，支持 /dice 100 或 /dice 2d6")
 ```
 
+## 声明式定时任务
+
+除了通过 `@command` 处理主动指令外，插件还支持声明式定时触发任务。在 `PluginBase` 子类中定义 `_plugin_schedule` 类属性，可以设置每日定时执行的事件：
+
+```python
+class MyTimedPlugin(PluginBase):
+    _plugin_schedule = [
+        {"time": "08:00", "duration": 1440},  # 每日 8:00 触发，持续 24 小时
+        {"time": "22:00", "duration": 30},    # 每日 22:00 触发，持续 30 分钟
+    ]
+```
+
+`_plugin_schedule` 中每个条目包含 `time`（格式 `HH:MM`）和 `duration`（持续分钟数，默认 1440）。系统会自动将这些定时设置转换为内部事件，并在相应时间触发插件逻辑。定时事件的处理函数需要定义一个对应的事件监听（参见 [生命周期与上下文](./plugin-lifecycle)）。
+
 ## 下一步
 
 - [指令系统详解](./plugin-command) — 理解完整的指令解析链路

@@ -49,7 +49,7 @@ class PluginBase:
     _plugin_version: str = "1.0.0"
     _plugin_author: str = ""
     _plugin_events: list[dict] = []
-    _plugin_schedule: list[dict] = []
+    _plugin_schedule: list[dict] = []  # 声明式定时，格式 [{"time": "HH:MM", "duration": 1440}]，自动转为 PluginEventDef
     _plugin_permissions: dict | None = None
     _plugin_nl_examples: list[str] = []
     _plugin_nl_slots: dict = {}
@@ -353,7 +353,7 @@ class PluginCommandDef:
 
 ### PluginEventDef
 
-事件触发器定义。
+事件触发器定义。定时事件也可通过 `_plugin_schedule` 类属性声明式定义（格式 `[{"time": "HH:MM", "duration": 1440}]`），框架自动转换为 `PluginEventDef`。
 
 ```python
 @dataclass
