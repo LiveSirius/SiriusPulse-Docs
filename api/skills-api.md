@@ -54,7 +54,7 @@ class SkillResult:
 ```python
 class SkillEngineContext(Protocol):
     async def send_message(self, group_id: str, message: str, ...) -> None
-    async def generate_text(self, prompt: str, ...) -> str
+    async def generate_text(self, prompt: str, ...) -> str  # 返回已清理的文本（不含 SKILL_CALL 和 sticker 标签）
     async def execute_skill_chain(self, chain: list[dict], ...) -> list[dict]
     @property
     def persona_name(self) -> str
@@ -63,6 +63,8 @@ class SkillEngineContext(Protocol):
 ```
 
 **使用场景：** 在 `create_background_tasks()` 中注册的后台任务，或者被动技能的事件回调中，通过此上下文与引擎交互（发送消息、生成文本、调用其他技能等）。
+
+> ⚠️ `generate_text()` 返回的文本已经过内部清理（移除了 `[SKILL_CALL: ...]` 和 `[STICKERS: ...]` 标签），因此通常无需再调用 `strip_skill_calls()`。
 
 **示例：**
 ```python
@@ -241,6 +243,8 @@ def strip_skill_calls(text: str) -> str
 ```
 
 **使用场景：** 在被动技能的回调中，若需要获取不带 SKILL_CALL 标记的纯净文本时使用。
+
+> ℹ️ 由于 `generate_text()` 已经返回清理后的文本，此函数通常不再需要，但作为额外安全措施仍然可用。
 
 **示例：**
 ```python

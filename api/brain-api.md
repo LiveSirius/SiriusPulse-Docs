@@ -303,7 +303,7 @@ brain.register_pre_hook(auto_translate, priority=0)
 | 要点 | 说明 |
 |:---|:---|
 | **hook 是同步函数** | 签名返回 `None`，不能直接 `await`。如需异步操作，使用 `asyncio.create_task` |
-| **post_process 总闸** | `ChatRequest.post_process=False` 时所有 hook 完全跳过。`generate_text()` 便捷方法默认关闭此开关 |
+| **post_process 总闸** | `ChatRequest.post_process=False` 时所有 hook 完全跳过。`generate_text()` 便捷方法默认关闭此开关，且返回 clean_text（经过后处理的纯净文本）。 |
 | **仅 chat() 通道生效** | `raw_call()` 通道没有任何 hook，人格注入和后处理也全部跳过 |
 | **task_filter 路由** | 设为 `{"response_generate"}` 可让 hook 仅在 AI 回复生成时触发，不影响分析任务 |
 | **ctx 字典生命周期** | 每次 `chat()` 调用创建一个新的空字典，pre-hook 写入的 ctx 在 post-hook 中可见，调用结束后释放 |
