@@ -14,6 +14,7 @@ from sirius_pulse.plugins.api import (
     PluginDataStore,          # 持久化 KV 存储
     CommandAST,               # 指令抽象语法树
     PluginCommandMeta,        # @command 装饰器记录的元数据
+    DispatchedOutput,         # 已分发的输出结果
     RenderMode,               # 输出策略枚举
     TriggerType,              # 触发方式枚举
     PatternType,              # 匹配模式枚举
@@ -53,6 +54,7 @@ class PluginBase:
     _plugin_permissions: dict | None = None
     _plugin_nl_examples: list[str] = []
     _plugin_nl_slots: dict = {}
+    _plugin_parameters: list[dict] = []  # 参数定义列表（v1.3+），自动解析为 PluginParameterDef
     _plugin_dependencies: list[str] = []
     _plugin_prompt_inject: str = ""
 
