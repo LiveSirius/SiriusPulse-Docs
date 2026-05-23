@@ -170,12 +170,13 @@ class TriggerSpec:
 
 ```python
 class SkillPassiveType(Enum):
-    BACKGROUND_TASK = "background_task"    # 后台周期性任务
-    TRIGGER = "trigger"                    # 条件触发器
-    WEBHOOK = "webhook"                    # Webhook 监听
+    PERIODIC = "periodic"    # 后台周期性任务（原 BACKGROUND_TASK）
+    TRIGGER = "trigger"      # 条件触发器
+    BOTH = "both"            # 同时有后台任务和触发器
+    WEBHOOK = "webhook"      # Webhook 监听
 ```
 
-**使用场景：** 在 `create_background_tasks()` 或 `create_on_load()` 中用于区分被动技能的类型。
+**使用场景：** 被动技能的 `passive_type` 属性会自动推断，无需手动设置。你可以在注册表中使用 `passive_skills_by_type()` 方法按类型筛选被动技能。
 
 ---
 
