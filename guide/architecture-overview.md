@@ -19,7 +19,7 @@ flowchart TD
     subgraph MainProcess["主进程"]
         CLI["python main.py run"]
         PM["PersonaManager<br/>扫描/启停/端口分配"]
-        WebUI["WebUIServer<br/>aiohttp REST + 静态页面"]
+        WebUI["WebUIServer<br/>aiohttp REST + WebSocket + 认证"]
         NM["NapCatManager<br/>全局安装/多实例调度"]
     end
 
@@ -105,8 +105,10 @@ flowchart TD
 - `get_status(name)` — 读取子进程心跳状态
 
 **WebUIServer（管理面板）**
-- 提供 REST API：人格列表、状态、配置、日志
-- 提供静态页面：Dashboard + 配置面板
+- 提供 REST API：人格列表、状态、配置、日志、监控
+- 提供 WebSocket 事件推送：实时接收引擎事件
+- 提供 JWT 认证：admin/viewer 角色权限控制
+- 提供静态页面：Dashboard + 配置面板 + 监控页面
 - 不直接操作 NapCat 进程，只通过 API 与 PersonaManager 交互
 
 **NapCatManager（QQ 管理器）**
@@ -653,12 +655,18 @@ flowchart TD
 | **平台适配** | `platforms/onebot_v11/napcat/adapter.py` | NapCat 适配器（OneBot v11 WebSocket 客户端、事件处理、后台投递循环） |
 | **QQ 管理** | `platforms/onebot_v11/napcat/manager.py` | NapCat 全局安装、多实例调度 |
 | **协议解析** | `platforms/onebot_v11/protocol.py` | OneBot v11 协议解析 |
-| **认知编排** | `core/emotional_engine.py` | Mixin 架构引擎（engine_core + pipeline + prompt_factory + bg_tasks + helpers） |
-| **引擎核心** | `core/engine_core.py` | 引擎基类：__init__、公开 API、持久化、表情包系统初始化；创建 Brain 实例 |
-| **引擎管线** | `core/pipeline.py` | 5 阶段管线：感知→认知→决策→执行→后台更新 |
+| **认知编排** | `core/emotional_engine.py` | 组合模式引擎最终类（委托 shim），继承 `_EmotionalGroupChatEngineBase` |
+| **引擎核心** | `core/engine_core.py` | 引擎基类：__init__、公开 API、委托方法；持有所有组件实例（Pipeline/BackgroundTasks/Helpers/EnginePersistence/EngineSticker） |
+| **引擎管线** | `core/pipeline.py` | Pipeline 组件：5 阶段管线（感知→认知→决策→执行→后台更新） |
 | **Prompt 工厂** | `core/prompt_factory.py` | 无状态 PromptFactory：统一 prompt 拼装、StyleAdapter 风格适配、PromptBundle |
-| **引擎后台任务** | `core/bg_tasks.py` | 6 个后台任务：延迟队列、主动触发、日记生成/合并、开发者私聊、表情包新鲜度 |
-| **引擎辅助** | `core/helpers.py` | 技能集成（含被动 SKILL 注册与触发分发）、上下文辅助、token 记录、异常分类 |
+| **引擎后台任务** | `core/bg_tasks.py` | BackgroundTasks 组件：后台任务管理，委托给 ProactiveTasks 和 DelayedQueueTasks |
+| **延迟队列任务** | `core/bg_tasks_delayed.py` | DelayedQueueTasks 组件：延迟队列 ticker、prompt 构建 |
+| **主动消息任务** | `core/bg_tasks_proactive.py` | ProactiveTasks 组件：主动触发 checker、developer chat |
+| **引擎辅助** | `core/helpers.py` | Helpers 组件：技能集成（含被动 SKILL 注册与触发分发）、上下文辅助、token 记录、异常分类 |
+| **引擎持久化** | `core/engine_persistence.py` | EnginePersistence 组件 + EngineStateStore：状态持久化（save/load） |
+| **引擎表情包** | `core/engine_sticker.py` | EngineSticker 组件：表情包系统（初始化/选择/发送） |
+| **引擎常量** | `core/constants.py` | 核心常量定义：时间、Token、记忆、反馈相关常量 |
+| **引擎工具** | `core/utils.py` | 核心工具函数：`now_iso`、`parse_sticker_tags`、`strip_conversation_history_xml` |
 | **认知分析** | `core/cognition.py` | 统一情绪+意图分析、规则引擎+LLM fallback（通过 Brain.raw_call） |
 | **响应策略** | `core/response_strategy.py` | 四种策略选择（IMMEDIATE/DELAYED/SILENT/PROACTIVE） |
 | **动态阈值** | `core/threshold_engine.py` | 阈值计算：base × activity × engagement × time |
@@ -678,8 +686,7 @@ flowchart TD
 | **SKILL 引擎上下文** | `core/skill_engine_context.py` | SkillEngineContextImpl：被动 SKILL 与引擎交互的适配器 |
 | **表情包系统** | `skills/sticker/` | RAG 表情包：向量索引、偏好管理、学习、反馈观察、新鲜度 |
 | **配置层** | `config/` | 类型安全的配置契约、加载器、helpers、JSONC |
-| **WebUI 层** | `webui/` | aiohttp REST API（server_core + 4 个 API 模块）+ 管理面板 |
+| **WebUI 层** | `webui/` | aiohttp REST API + WebSocket 事件推送 + JWT 认证 + 监控 API（server_core + 6 个 API 模块）+ 管理面板 |
 | **Token 层** | `token/` | 统计、SQLite 持久化、多维分析 |
 | **会话存储** | `session/store.py` | JsonSessionStore / SqliteSessionStore / SessionStoreFactory |
-| **后台任务** | `background_tasks.py` | 轻量级 asyncio 任务调度器 |
-| **工具函数** | `utils/` | WorkspaceLayout、JsonSerializable mixin、开发辅助 |
+| **工具函数** | `utils/` | WorkspaceLayout、JSON I/O、异步重试、开发辅助 |

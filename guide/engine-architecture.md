@@ -2,17 +2,21 @@
 
 EmotionalGroupChatEngine 是 Sirius Pulse 的核心，负责从消息输入到回复输出的完整处理链路。
 
-## 混合架构
+## 组合模式架构
 
-引擎通过 **Mixin 模式** 组合三大子系统：
+引擎通过**组合模式**集成多个组件，所有组件通过 `engine._xxx` 属性访问：
 
 ```python
-class EmotionalGroupChatEngine(
-    PipelineMixin,         # 5 阶段管线
-    BackgroundTasksMixin,  # 6 个后台任务
-    HelpersMixin           # 技能集成、工具方法
-):
+class EmotionalGroupChatEngine(_EmotionalGroupChatEngineBase):
+    """组合模式最终类，所有组件已集成到基类中。"""
     pass
+
+# 组件访问示例
+engine._pipeline      # Pipeline: 5 阶段管线
+engine._bg_tasks_mgr  # BackgroundTasks: 后台任务管理
+engine._helpers       # Helpers: 技能集成、工具方法
+engine._persistence   # EnginePersistence: 状态持久化
+engine._sticker       # EngineSticker: 表情包系统
 ```
 
 ## 5 阶段管线

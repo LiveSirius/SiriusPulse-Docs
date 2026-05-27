@@ -2,28 +2,37 @@
 
 ## 模块概述
 
-核心引擎模块是 Sirius Pulse 的对话编排核心，采用 **Mixin 架构** 将职责分散到多个文件中，最终在 `EmotionalGroupChatEngine` 类中组合成完整的引擎。
+核心引擎模块是 Sirius Pulse 的对话编排核心，采用**组合模式**将职责分散到多个组件中，通过 `_EmotionalGroupChatEngineBase` 基类持有所有组件实例，并在 `EmotionalGroupChatEngine` 最终类中提供向后兼容的委托方法。
 
 ## 架构设计
 
 ```
-EmotionalGroupChatEngine (最终类)
-    ├── PipelineMixin          # 5 阶段管线
-    ├── BackgroundTasksMixin   # 6 个后台任务
-    └── HelpersMixin           # 辅助方法
-
-所有 Mixin 通过 _Base 链继承 _EmotionalGroupChatEngineBase
+EmotionalGroupChatEngine (最终类，委托 shim)
+    └── _EmotionalGroupChatEngineBase (基类)
+            ├── engine._pipeline: Pipeline           # 5 阶段管线
+            ├── engine._bg_tasks_mgr: BackgroundTasks  # 后台任务管理
+            │       ├── .proactive: ProactiveTasks     # 主动消息任务（延迟初始化）
+            │       └── .delayed: DelayedQueueTasks    # 延迟队列任务（延迟初始化）
+            ├── engine._helpers: Helpers              # 技能集成、工具方法
+            ├── engine._persistence: EnginePersistence # 状态持久化
+            │       └── EngineStateStore               # 序列化/反序列化
+            ├── engine._sticker: EngineSticker         # 表情包系统
+            └── engine._prompt_factory: PromptFactory  # Prompt 构建
 ```
 
 ## 核心文件
 
 | 文件 | 职责 |
 |------|------|
-| `emotional_engine.py` | 最终类定义，组合所有 Mixin |
-| `engine_core.py` | 引擎基类：`__init__`、公开 API、持久化 |
-| `pipeline.py` | 5 阶段管线：感知→认知→决策→执行→后台更新 |
-| `bg_tasks.py` | 6 个后台任务：延迟队列、主动触发、日记生成等 |
-| `helpers.py` | 工具方法：SKILL 集成、Plugin 集成、token 记录 |
+| `emotional_engine.py` | 最终类定义（委托 shim），组合模式继承 `_EmotionalGroupChatEngineBase` |
+| `engine_core.py` | 引擎基类：`__init__`、公开 API、委托方法（thin wrappers） |
+| `pipeline.py` | Pipeline 组件：5 阶段管线（感知→认知→决策→执行→后台更新） |
+| `bg_tasks.py` | BackgroundTasks 组件：后台任务管理，委托给 ProactiveTasks 和 DelayedQueueTasks |
+| `bg_tasks_delayed.py` | DelayedQueueTasks 组件：延迟队列任务（ticker、prompt 构建） |
+| `bg_tasks_proactive.py` | ProactiveTasks 组件：主动消息任务（checker、developer chat） |
+| `helpers.py` | Helpers 组件：SKILL/Plugin 集成、token 记录、异常分类 |
+| `engine_persistence.py` | EnginePersistence 组件 + EngineStateStore：状态持久化（save/load） |
+| `engine_sticker.py` | EngineSticker 组件：表情包系统（初始化/选择/发送） |
 | `prompt_factory.py` | PromptFactory：无状态 prompt 构建工具类 |
 | `brain.py` | Brain：LLM 调用封装，支持 hook 后处理 |
 | `cognition.py` | CognitionAnalyzer：情感+意图+共情联合分析 |
@@ -116,12 +125,90 @@ threshold = base × activity_factor × engagement_factor × time_factor × peer_
 ### EmotionalGroupChatEngine
 
 ```python
-class EmotionalGroupChatEngine(
-    PipelineMixin,
-    BackgroundTasksMixin,
-    HelpersMixin,
-):
+class EmotionalGroupChatEngine(_EmotionalGroupChatEngineBase):
+    """Combined EmotionalGroupChatEngine with all components.
+
+    所有组件已通过组合模式集成到基类中：
+    - engine._helpers: Helpers 组件
+    - engine._bg_tasks_mgr: BackgroundTasks 组件
+    - engine._pipeline: Pipeline 组件
+    - engine._persistence: EnginePersistence 组件
+    - engine._sticker: EngineSticker 组件
+    不再需要通过继承 Mixin 方式集成。
+    """
     pass
+```
+
+### Pipeline
+
+Pipeline 组件封装 5 阶段管线方法：
+
+```python
+class Pipeline:
+    def __init__(self, engine: _EmotionalGroupChatEngineBase) -> None: ...
+    def perception(self, group_id, message, participants) -> str: ...
+    async def cognition(self, content, user_id, group_id, **kwargs) -> tuple: ...
+    def decision(self, intent, emotion, group_id, user_id, sender_type="human") -> StrategyDecision: ...
+    async def execution(self, decision, message, intent, emotion, memories, group_id, empathy, user_id) -> dict: ...
+    def background_update(self, group_id, message, emotion, intent, user_id) -> None: ...
+```
+
+### BackgroundTasks
+
+后台任务管理组件，子任务委托给 ProactiveTasks 和 DelayedQueueTasks：
+
+```python
+class BackgroundTasks:
+    def __init__(self, engine: _EmotionalGroupChatEngineBase) -> None: ...
+    @property
+    def proactive(self) -> ProactiveTasks: ...  # 延迟初始化
+    @property
+    def delayed(self) -> DelayedQueueTasks: ...  # 延迟初始化
+    def start(self) -> None: ...
+    def stop(self) -> None: ...
+    async def _diary_promoter(self) -> None: ...
+    async def _diary_consolidator(self) -> None: ...
+```
+
+### Helpers
+
+技能集成、工具方法组件：
+
+```python
+class Helpers:
+    def __init__(self, engine: _EmotionalGroupChatEngineBase) -> None: ...
+    def set_skill_runtime(self, *, skill_registry=None, skill_executor=None) -> None: ...
+    def set_plugin_runtime(self, *, plugin_registry=None, plugin_executor=None, plugin_dispatcher=None) -> None: ...
+    async def execute_plugin_command(self, decision, message, group_id, user_id) -> dict: ...
+    def record_subtask_tokens(self, task_name, model_name, group_id, **kwargs) -> None: ...
+    def classify_exception(self, exc: Exception) -> str: ...
+```
+
+### EnginePersistence
+
+状态持久化组件：
+
+```python
+class EnginePersistence:
+    def __init__(self, engine: _EmotionalGroupChatEngineBase) -> None: ...
+    def persist_group_state(self, group_id: str) -> None: ...
+    def persist_full_state(self) -> None: ...
+    def save_state(self) -> None: ...
+    def load_state(self) -> None: ...
+    def set_proactive_enabled(self, group_id: str, enabled: bool) -> None: ...
+    def is_proactive_enabled(self, group_id: str) -> bool: ...
+```
+
+### EngineSticker
+
+表情包系统组件：
+
+```python
+class EngineSticker:
+    def __init__(self, engine: _EmotionalGroupChatEngineBase) -> None: ...
+    def _init_sticker_system(self) -> None: ...
+    def _pick_sticker_file(self, names: list[str]) -> Path | None: ...
+    async def _send_stickers_by_names(self, group_id: str, names: list[str]) -> dict: ...
 ```
 
 ### PromptFactory
@@ -157,6 +244,11 @@ __init__
     ├── _init_brain()                   # Brain 初始化
     ├── _init_event_bus_and_persistence()  # 事件总线+持久化
     ├── _init_skill_plugin_and_runtime()   # SKILL/Plugin 运行时
+    ├── _init_helpers()                 # 组合模式：Helpers 组件
+    ├── _init_bg_tasks()                # 组合模式：BackgroundTasks 组件
+    ├── _init_pipeline()                # 组合模式：Pipeline 组件
+    ├── _init_persistence()             # 组合模式：EnginePersistence 组件
+    ├── _init_sticker()                 # 组合模式：EngineSticker 组件
     └── _register_engine_hooks()        # 注册后处理 hook
 ```
 
