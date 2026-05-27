@@ -9,6 +9,7 @@
 | 文件 | 职责 |
 |------|------|
 | `layout.py` | WorkspaceLayout：工作区路径布局 |
+| `json_io.py` | 公共 JSON 文件读写工具（原子写入、安全读取） |
 
 ## WorkspaceLayout
 
@@ -66,6 +67,29 @@ data_root/
     └── adapter_port_registry.json
 ```
 
+## json_io.py
+
+### 原子写入
+
+```python
+from sirius_pulse.utils.json_io import atomic_write_json
+
+atomic_write_json(path, data)
+# 等价于：
+# tmp = path.with_suffix(path.suffix + ".tmp")
+# tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2))
+# tmp.replace(path)
+```
+
+### 安全读取
+
+```python
+from sirius_pulse.utils.json_io import read_json
+
+data = read_json(path, default=None)
+# 读取失败时返回 default，不抛异常
+```
+
 ## 其他工具函数
 
 ### core/utils.py
@@ -73,7 +97,12 @@ data_root/
 ```python
 def now_iso() -> str:
     """返回当前 UTC 时间的 ISO 8601 格式字符串。"""
-    return datetime.now(timezone.utc).isoformat()
+
+def strip_conversation_history_xml(text: str) -> str:
+    """移除 LLM 模型可能回显的 conversation_history XML 块。"""
+
+def parse_sticker_tags(text: str) -> tuple[str, list[str]]:
+    """从回复文本中解析 [STICKERS: "name1", "name2"] 格式的标签。"""
 ```
 
 ### token/utils.py

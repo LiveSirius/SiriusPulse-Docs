@@ -33,6 +33,8 @@ EmotionalGroupChatEngine (最终类)
 | `model_router.py` | ModelRouter：任务感知模型选择 |
 | `events.py` | SessionEventBus：事件总线 |
 | `identity_resolver.py` | IdentityResolver：用户身份解析 |
+| `utils.py` | 通用工具函数：`now_iso`、`parse_sticker_tags`、`strip_conversation_history_xml` |
+| `constants.py` | 核心常量定义：时间、Token、记忆、反馈相关常量 |
 
 ## 5 阶段管线
 
