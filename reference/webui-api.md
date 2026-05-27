@@ -197,6 +197,9 @@ GET /api/providers
 
 ### 更新 Provider 配置
 
+支持传入 **对象** 或 **数组** 格式。
+
+**对象格式**（按名称覆盖或新增）：
 ```
 PUT /api/providers
 Content-Type: application/json
@@ -207,6 +210,23 @@ Content-Type: application/json
     "base_url": "https://api.deepseek.com"
   }
 }
+```
+
+**数组格式**（每个元素需包含 `name` 字段，不在数组中的旧 Provider 将被删除）：
+```
+PUT /api/providers
+Content-Type: application/json
+
+[
+  {
+    "name": "deepseek",
+    "type": "deepseek",
+    "base_url": "https://api.deepseek.com",
+    "api_key": "sk-xxx",
+    "enabled": true,
+    "models": []
+  }
+]
 ```
 
 ## Token 统计
