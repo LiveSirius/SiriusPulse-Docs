@@ -71,6 +71,7 @@ flowchart TD
 | **chat 串行，raw 并行** | `chat()` 通道串行化保证消息顺序；`raw_call()` 通道不受限，可与 chat 并行 |
 | **NapCat 多实例** | 每个人格独立的 QQ 实例，共享全局二进制，独立配置和日志 |
 | **端口自动分配** | `PersonaManager` 从 3001 开始递增分配 WebSocket 端口 |
+| **内存+持久化双写** | 每次记忆写入 `basic_memory`（内存窗口）后自动同步到 `basic_store`（持久化存储），确保重启后上下文不丢失 |
 
 ---
 
@@ -159,7 +160,7 @@ flowchart TD
     subgraph Perception["① 感知层（零 LLM 成本）"]
         E --> P1["IdentityResolver.resolve()<br/>'今天工作好累' 是谁发的？"]
         P1 --> P2["UserManager.register()<br/>更新/创建用户档案"]
-        P2 --> P3["BasicMemoryManager.add_entry()<br/>加入群聊窗口"]
+        P2 --> P3["BasicMemoryManager.add_entry()<br/>加入群聊窗口<br/>并持久化到 basic_store"]
         P3 --> P4["RhythmAnalyzer.analyze()<br/>计算群聊热度"]
         P4 --> P5["emit PERCEPTION_COMPLETED"]
     end
@@ -197,6 +198,8 @@ flowchart TD
 
     X12 --> U["_background_update()<br/>更新群体氛围 + 群规范学习 + 反馈结算 + 情感孤岛检测"]
 ```
+
+> **新增持久化说明**：在 `BasicMemoryManager.add_entry()` 步骤中，消息不仅被加入内存窗口（最近 30 条），还会通过 `engine.basic_store.append()` 持久化到磁盘。这意味着即使引擎重启，基本记忆仍然可以恢复，对话上下文不会丢失。此持久化同样适用于 AI 回复记录和 SKILL 执行结果。
 
 ### 4.2 认知层内部细节
 
@@ -382,11 +385,12 @@ flowchart TD
     end
 
     subgraph Memory
-        M1["memory/basic/<group_id>.jsonl<br/>基础记忆（30条）"]
+        M1["memory/basic/<group_id>.jsonl<br/>基础记忆（30条内存窗口）"]
         M2["memory/diary/<group_id>.jsonl<br/>日记记忆"]
         M3["memory/diary/index/<group_id>.json<br/>日记索引"]
         M4["memory/glossary/terms.json<br/>名词解释（人格级隔离）"]
         M5["memory/semantic/<br/>群语义画像"]
+        M6["memory/basic_store/<group_id>.jsonl<br/>持久化基础记忆（所有条目）"]
     end
 
     subgraph SkillData
@@ -400,6 +404,8 @@ flowchart TD
         L2["logs/archive/<br/>归档日志"]
     end
 ```
+
+> **记忆持久化机制**：`basic_memory`（内存窗口）保留最近 30 条消息，用于对话上下文；每次调用 `add_entry` 后，引擎会自动调用 `basic_store.append()` 将相同条目写入 `memory/basic_store/` 下的独立 JSONL 文件。这样即使引擎重启，也可以通过 `basic_store` 恢复完整的对话历史。此机制适用于用户消息、AI 回复、SKILL 执行结果等所有需要写入记忆的文本。
 
 ### 6.3 NapCat 多实例数据
 

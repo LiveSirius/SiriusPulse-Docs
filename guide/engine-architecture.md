@@ -148,6 +148,9 @@ Brain 是引擎的 LLM 调用层，支持：
 - 定期全量保存（300 秒间隔）
 - 引擎停止时
 
-持久化内容包括：basic_memory、时间戳、emotion、delay_queue、token_usage、diary、proactive_state。
+持久化内容包括：basic_memory、basic_store、时间戳、emotion、delay_queue、token_usage、diary、proactive_state。
+
+> 在写入 `basic_memory` 的同时，引擎会将返回的 entry 对象追加到 `basic_store`，用于后续的快速检索和同步。
+
 
 详见 [记忆系统](./memory-system)。
