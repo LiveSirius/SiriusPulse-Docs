@@ -196,11 +196,57 @@ class SkillParameter(ConfigParameter):
     description: str = ""                  # 描述
     required: bool = False                 # 是否必填
     default: Any = None                    # 默认值
+    choices: list[str] | None = None       # 可选值列表（用于 checkbox_group）
+    fields: list[dict] | None = None       # 子字段定义（用于 object_array）
+    group: str = ""                        # 参数分组名称
 ```
 
 **使用场景：** `SKILL_META["parameters"]` 中定义参数时，由 `SkillRegistry` 自动解析为 `SkillParameter` 对象。一般不需要手动构造。
 
 ---
+
+## 配置构建器
+
+技能和插件开发中，可以使用 `ConfigBuilder` 或声明式 API 定义配置参数，再通过 `build_parameters_from_class` 生成参数列表，用于 WebUI 配置表单。
+
+### ConfigBuilder
+
+链式 API，支持参数分组。
+
+```python
+from sirius_pulse import ConfigBuilder
+
+_builder = ConfigBuilder()
+_builder.group("认证").add("api_key", type="password", description="API 密钥", required=True)
+_builder.group("模型").add("model", type="model", description="使用的模型")
+_builder.group("模型").add("temperature", type="float", description="温度", default=0.7)
+parameters = _builder.build()
+```
+
+### config_param & secret
+
+声明式 API，在配置类中使用 `config_param` 和 `secret` 标记字段。
+
+```python
+from sirius_pulse import config_param, secret, build_parameters_from_class
+
+class MySkillConfig:
+    api_key: str = secret("API 密钥", required=True, group="认证")
+    model: str = config_param("使用的模型", type="model", group="模型")
+    temperature: float = config_param("温度", default=0.7, group="模型")
+
+parameters = build_parameters_from_class(MySkillConfig)
+```
+
+`secret` 是 `config_param` 的快捷方式，自动设置 `type="password"`。
+
+### ParamDefinition
+
+参数定义的内部数据类，一般无需手动构造。
+
+### 使用场景
+
+在技能模块中，将生成的 `parameters` 列表赋值给 `SKILL_META["parameters"]`，即可在 WebUI 中呈现配置表单。
 
 ## 数据持久化
 

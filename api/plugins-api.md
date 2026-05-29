@@ -421,7 +421,10 @@ class PluginNaturalLangDef:
 @dataclass
 class PluginParameterDef(ConfigParameter):
     position: int = 0                  # 位置参数序号
-    choices: list[str] | None = None   # 可选值限制
+    type: str = "str"                  # str | int | float | bool | list | model | password | object_array | checkbox_group
+    choices: list[str] | None = None   # 可选值限制（用于 checkbox_group 类型）
+    fields: list[dict[str, Any]] | None = None  # 子字段定义（用于 object_array 类型）
+    group: str = ""                    # 参数分组名称
 ```
 
 ---
