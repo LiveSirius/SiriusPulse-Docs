@@ -13,7 +13,7 @@ class EmotionalGroupChatEngine(_EmotionalGroupChatEngineBase):
 
 # 组件访问示例
 engine._pipeline      # Pipeline: 5 阶段管线
-engine._bg_tasks_mgr  # BackgroundTasks: 后台任务管理
+
 engine._helpers       # Helpers: 技能集成、工具方法
 engine._persistence   # EnginePersistence: 状态持久化
 engine._sticker       # EngineSticker: 表情包系统
