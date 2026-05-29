@@ -74,6 +74,17 @@ Content-Type: application/json
 { ... }
 ```
 
+### 获取体验配置
+
+```
+GET /api/personas/{name}/experience
+```
+
+响应：
+```json
+{ ... }
+```
+
 ## 记忆管理
 
 ### 获取群聊记忆
