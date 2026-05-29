@@ -118,6 +118,34 @@ GET /api/biography/{persona_name}
 GET /api/plugins/{persona_name}
 ```
 
+### 获取插件详情
+
+```
+GET /api/plugins/{persona_name}/{plugin_name}
+```
+
+响应：
+```json
+{
+  "name": "example_plugin",
+  "display_name": "示例插件",
+  "description": "...",
+  "version": "1.0.0",
+  "author": "dev",
+  "enabled": true,
+  "parameters": [
+    {
+      "name": "param1",
+      "description": "参数说明",
+      "required": true,
+      "default": "默认值",
+      "choices": ["选项A", "选项B"],
+      "group": "基本设置"
+    }
+  ]
+}
+```
+
 ### 更新插件配置
 
 ```
