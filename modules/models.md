@@ -73,7 +73,6 @@ class PersonaProfile:
     # 表达风格
     communication_style: str = ""      # concise/detailed/formal/casual/humorous
     speech_rhythm: str = ""
-    catchphrases: list[str] = []
     emoji_preference: str = ""         # heavy/moderate/light/none
     humor_style: str = ""              # sarcastic/wholesome/dark/dry/witty
     

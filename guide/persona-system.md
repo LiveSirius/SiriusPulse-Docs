@@ -66,7 +66,7 @@ data/personas/my-bot/
 |------|------|------|
 | `core` | 核心性格描述词，会注入 system prompt | `"热情、幽默、善解人意"` |
 | `emotional_style` | 情绪表达方式 | `"喜怒形于色"` |
-| `speech_style` | 说话风格和口头禅 | `"喜欢用 emoji 和感叹词"` |
+| `speech_style` | 说话风格 | `"喜欢用 emoji 和感叹词"` |
 | `response_habit` | 回应习惯 | `"会引用群友的话"` |
 | `social_preference` | 社交偏好 | `"喜欢参与热闹话题"` |
 | `humor_style` | 幽默风格（可选） | `"冷幽默"` |
