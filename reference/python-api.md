@@ -14,6 +14,9 @@ from sirius_pulse import (
     PluginRegistry,
     PluginLoader,
     PluginExecutor,
+    IdentityResolver,
+    IdentityContext,
+    IdentityResolution,
     # ...
 )
 ```
@@ -219,7 +222,7 @@ from sirius_pulse.models import (
     Participant,
     Transcript,
     EmotionState,
-    IntentAnalysisV3,
+    IntentAnalysisV3,      # 新增 sticker_caption 字段
     ResponseStrategy,
 )
 

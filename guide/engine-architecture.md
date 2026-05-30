@@ -12,12 +12,13 @@ class EmotionalGroupChatEngine(_EmotionalGroupChatEngineBase):
     pass
 
 # 组件访问示例
-engine._pipeline      # Pipeline: 5 阶段管线
-
-engine._helpers       # Helpers: 技能集成、工具方法
-engine._persistence   # EnginePersistence: 状态持久化
-engine._sticker       # EngineSticker: 表情包系统
-engine._pinned_manager # PinnedMessageManager: 消息钉住系统
+engine._pipeline           # Pipeline: 5 阶段管线
+engine._helpers            # Helpers: 技能集成、工具方法
+engine._persistence        # EnginePersistence: 状态持久化
+engine._sticker            # EngineSticker: 表情包系统
+engine._pinned_manager     # PinnedMessageManager: 消息钉住系统
+engine._identity_resolver  # IdentityResolver: 身份解析（含别名/模糊匹配）
+engine._bot_platform_uids  # dict[str,str]: Bot 在各平台的 UID
 ```
 
 ## 5 阶段管线
@@ -79,7 +80,7 @@ flowchart TB
 
 ### 认知分析器（CognitionAnalyzer）
 
-联合分析情绪和意图。输入最近 N 条历史消息 + 当前消息，输出 `IntentAnalysisV3` + `EmotionState`。
+联合分析情绪和意图。输入最近 N 条历史消息 + 当前消息，输出 `IntentAnalysisV3` + `EmotionState`。`IntentAnalysisV3` 包含 `sticker_caption` 字段，用于存储动画表情的缓存描述，在后续写回 basic_memory 时会优先使用该字段（其次才是 `image_caption`）。
 
 认知分析器集成了传记系统的用户别名数据，当群聊中存在用户别称映射时（如 `"小明" → 张三`），会将这些信息注入 LLM prompt，帮助模型区分 AI 自身的别名和其他用户的别称，从而更准确地计算 `directed_score`（消息指向 AI 的程度）。
 
@@ -92,6 +93,20 @@ flowchart TB
 - 消息速率（message_rate）
 - 传记亲和力（biography affinity）
 - 人格回复频率偏置
+
+### 身份解析器（IdentityResolver）
+
+群聊消息到达后，引擎首先通过 `IdentityResolver` 对消息发言者进行身份解析。解析器支持四级解析链：
+
+| 层级 | 方式 | 置信度 | 说明 |
+|------|------|--------|------|
+| L1 | platform_id 精确匹配 | 1.0 | 通过平台用户 ID 直接匹配已注册用户 |
+| L1.5 | Bot 自身检测 | 1.0 | 检测消息是否来自 Bot 自身账号（基于 `_bot_platform_uids`） |
+| L2 | alias_index 精确匹配 | 0.9 | 通过传记系统中的别名索引精确匹配 |
+| L3 | 模糊匹配 | 0.7~0.9 | 基于模糊字符串匹配（如相似度>0.85） |
+| L4 | 上下文推断 | 0.6 | 根据最近发言者列表推断身份 |
+
+每个解析结果都包含 `user_id`、`confidence`（置信度）和 `source`（解析来源），供后续认知分析、决策等阶段参考。
 
 ### 消息前缀过滤（MessagePrefixFilter）
 
@@ -217,7 +232,7 @@ Brain 是引擎的 LLM 调用层，支持：
 
 持久化内容包括：basic_memory、basic_store、时间戳、emotion、delay_queue、token_usage、diary、proactive_state。
 
-> 在写入 `basic_memory` 的同时，引擎会将返回的 entry 对象（包含 `system_prompt` 字段）追加到 `basic_store`，用于后续的快速检索和同步。
+> 在写入 `basic_memory` 的同时，引擎会将返回的 entry 对象（包含 `system_prompt`、`tags`、`multimodal_inputs` 字段）追加到 `basic_store`，用于后续的快速检索和同步。
 
 
 详见 [记忆系统](./memory-system)。
