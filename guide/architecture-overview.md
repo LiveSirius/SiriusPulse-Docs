@@ -142,6 +142,7 @@ flowchart TD
 - 每个 bridge 有自己的 `allowed_group_ids` 配置
 - engine 的 `_pending_reminders` 是共享的（所有 bridge 都能投递提醒）
 - Brain 是单例的，`chat()` 串行执行，`raw_call()` 可与 chat 并行
+- **IdentityResolver 增强解析**：`IdentityResolver` 新增 `resolve_with_alias()` 方法，支持四层解析链（精确平台ID→Bot自识别→别名精确→模糊匹配），返回值含置信度和来源，用于开发者判断和用户解析。
 - 引擎支持配置文件热重载，通过写入 `engine_state/reload_requested` 标志文件触发，支持类型：`persona`、`orchestration`、`experience`、`provider`、`all`。其中 `provider` 类型会重新构建 Provider 实例，使 provider 配置变更无需重启引擎。
 
 ---
@@ -160,7 +161,7 @@ flowchart TD
     D --> E["EmotionalGroupChatEngine.process_message()"]
 
     subgraph Perception["① 感知层（零 LLM 成本）"]
-        E --> P1["IdentityResolver.resolve()<br/>'今天工作好累' 是谁发的？"]
+        E --> P1["IdentityResolver.resolve_with_alias()<br/>增强解析链 L1~L4<br/>'今天工作好累' 是谁发的？"]
         P1 --> P2["UserManager.register()<br/>更新/创建用户档案"]
         P2 --> P3["BasicMemoryManager.add_entry()<br/>加入群聊窗口<br/>并持久化到 basic_store"]
         P3 --> P4["RhythmAnalyzer.analyze()<br/>计算群聊热度"]
@@ -204,6 +205,8 @@ flowchart TD
 > **新增持久化说明**：在 `BasicMemoryManager.add_entry()` 步骤中，消息不仅被加入内存窗口（最近 30 条），还会通过 `engine.basic_store.append()` 持久化到磁盘。这意味着即使引擎重启，基本记忆仍然可以恢复，对话上下文不会丢失。此持久化同样适用于 AI 回复记录和 SKILL 执行结果。
 >
 > **纯表情包回复的记忆记录**：当 AI 回复仅包含表情包（如 `[STICKERS: 猫猫.jpg]`）时，引擎会以 `[STICKERS: ...]` 的形式将其记录到基本记忆中，确保纯表情包回复不会丢失。
+>
+> **标签与多模态输入记录**：每次记忆记录时还会附带 `tags`（如表情包标签、钉住/取消钉住指令、图片数量）和 `multimodal_inputs`（多模态输入详情），用于后续标注和检索。sticker_caption 优先于 image_caption 写入。
 
 ### 4.2 认知层内部细节
 
@@ -227,8 +230,8 @@ flowchart TD
     end
 
     subgraph LLMFallback["单次 LLM fallback"]
-        D --> F1["轻量模型请求联合 JSON"]
-        F1 --> F2["返回完整分析结果"]
+        D --> F1["轻量模型请求联合 JSON<br/>包含 sticker_caption"]
+        F1 --> F2["返回完整分析结果<br/>含 sticker_caption 字段"]
     end
 
     C --> G["上下文融合<br/>情感轨迹 + 群体氛围 + 助手情绪"]
