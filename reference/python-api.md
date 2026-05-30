@@ -219,8 +219,8 @@ result = provider.generate(GenerationRequest(
 ```python
 from sirius_pulse.models import (
     Message,
-    Participant,
     Transcript,
+    UnifiedUser,
     EmotionState,
     IntentAnalysisV3,      # 新增 sticker_caption 字段
     ResponseStrategy,
