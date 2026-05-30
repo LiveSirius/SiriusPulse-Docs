@@ -89,7 +89,6 @@ flowchart TB
 - 灵敏度设置（sensitivity）
 - 群聊热度（heat）
 - 消息速率（message_rate）
-- 用户互动率（engagement_rate）
 - 传记亲和力（biography affinity）
 - 人格回复频率偏置
 
