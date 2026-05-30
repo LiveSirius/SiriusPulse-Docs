@@ -174,6 +174,8 @@ responses = await executor.execute(
 ```python
 from sirius_pulse import (
     AutoRoutingProvider,
+    MimoProvider,
+    MimoTokenPlanProvider,
     OpenAICompatibleProvider,
     MockProvider,
     ProviderRegistry,
@@ -186,6 +188,18 @@ registry = ProviderRegistry()
 registry.register("deepseek", OpenAICompatibleProvider(
     api_key="sk-xxx",
     base_url="https://api.deepseek.com",
+))
+
+# 小米MIMO平台按量付费
+registry.register("mimo", MimoProvider(
+    api_key="sk-xxx",
+    base_url="https://api.xiaomimimo.com/v1",
+))
+
+# 小米MIMO Token Plan订阅制
+registry.register("mimo-tokenplan", MimoTokenPlanProvider(
+    api_key="tp-xxx",
+    base_url="https://token-plan-cn.xiaomimimo.com/v1",
 ))
 
 # 路由调用

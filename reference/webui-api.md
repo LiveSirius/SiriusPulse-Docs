@@ -268,6 +268,8 @@ Content-Type: application/json
 ]
 ```
 
+支持的提供商类型包括：`deepseek`, `aliyun-bailian`, `bigmodel`, `mimo`, `mimo-tokenplan`, `siliconflow`, `volcengine-ark`, `ytea` 以及通用 `openai-compatible` 类型。
+
 ## Token 统计
 
 ### 获取 Token 用量
