@@ -78,10 +78,10 @@ export default defineConfig({
           items: [
             { text: 'Python API', link: '/reference/python-api' },
             { text: 'WebUI API', link: '/reference/webui-api' },
-            { text: 'Skills API', link: '/api/skills-api' },
-            { text: 'Plugins API', link: '/api/plugins-api' },
-            { text: 'AI API 参考', link: '/api/ai-api' },
-            { text: 'Brain API', link: '/api/brain-api' },
+            { text: 'Skills API', link: '/reference/skills-api' },
+            { text: 'Plugins API', link: '/reference/plugins-api' },
+            { text: 'AI API 参考', link: '/reference/ai-api' },
+            { text: 'Brain API', link: '/reference/brain-api' },
           ],
         },
         {
