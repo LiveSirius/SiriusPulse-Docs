@@ -270,6 +270,8 @@ Content-Type: application/json
 
 支持的提供商类型包括：`deepseek`, `aliyun-bailian`, `bigmodel`, `mimo`, `mimo-tokenplan`, `siliconflow`, `volcengine-ark`, `ytea` 以及通用 `openai-compatible` 类型。
 
+> **自动热重载**：更新 Provider 配置后，系统会自动向所有运行中的人格发送 `provider` 热重载信号，无需手动重启人格即可使新配置生效。若通过 `POST /api/providers/refresh-models` 刷新模型列表，也会触发同样的热重载。
+
 ## Token 统计
 
 ### 获取 Token 用量

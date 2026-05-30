@@ -111,6 +111,7 @@ flowchart TD
 - 提供 JWT 认证：admin/viewer 角色权限控制
 - 提供静态页面：Dashboard + 配置面板 + 监控页面
 - 不直接操作 NapCat 进程，只通过 API 与 PersonaManager 交互
+- 保存 Provider 配置后自动通知所有运行中的人格外进程热重载 provider 配置
 
 **NapCatManager（QQ 管理器）**
 - 管理 NapCat 全局二进制（安装、更新）
@@ -141,6 +142,7 @@ flowchart TD
 - 每个 bridge 有自己的 `allowed_group_ids` 配置
 - engine 的 `_pending_reminders` 是共享的（所有 bridge 都能投递提醒）
 - Brain 是单例的，`chat()` 串行执行，`raw_call()` 可与 chat 并行
+- 引擎支持配置文件热重载，通过写入 `engine_state/reload_requested` 标志文件触发，支持类型：`persona`、`orchestration`、`experience`、`provider`、`all`。其中 `provider` 类型会重新构建 Provider 实例，使 provider 配置变更无需重启引擎。
 
 ---
 
@@ -384,6 +386,7 @@ flowchart TD
         S1["engine_state/persona.json<br/>运行时人格状态"]
         S2["engine_state/worker_status.json<br/>子进程心跳"]
         S3["engine_state/enabled<br/>启停标志"]
+        S4["engine_state/reload_requested<br/>热重载请求标志"]
     end
 
     subgraph Memory
