@@ -87,8 +87,17 @@ per-group deque:
 
 | 层级 | 范围 | 说明 |
 |------|------|------|
-| `group` | 单个群聊 | 群氛围、规范、活跃时段、平均消息长度、表情/提及率 |
+| `group` | 单个群聊 | 群氛围、规范、活跃时段、平均消息长度、表情/提及率、兴趣话题、禁忌话题、主导话题 |
 | `user` | 单个用户在某群 | 互动率（engagement_rate）、交互次数、熟悉度、反馈追踪 |
+
+群聊画像数据存储在 `group_semantic_profiles` 表中，除上述信息外还包括 `group_name`、`interest_topics`（兴趣话题）、`group_norms`（群规范详情）、`taboo_topics`（禁忌话题）、`dominant_topic`（主导话题）等字段。
+
+此外，系统会持续追踪群聊的动态氛围和历史交互反馈，存储在以下两张表中：
+
+- **`atmosphere_history`**：记录群聊氛围的时间序列，包含 `group_valence`（情绪效价）、`group_arousal`（唤醒度）、`active_participants`（活跃参与者数）等指标。
+- **`group_pending_ai_responses`**：记录 AI 发送给群聊的消息及其后续用户互动情况，用于评估响应效果和学习互动模式。包含 `sent_at`、`target_user_id`、`topic_hint`、`response_length`、`was_engaged`、`engagement_latency_s` 等字段。
+
+这些数据为认知引擎的决策提供依据，例如根据氛围历史调整响应策略，或者根据用户对 AI 消息的回应情况动态调整参与度。
 
 ### 学习机制
 
