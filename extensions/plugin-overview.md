@@ -47,7 +47,7 @@ flowchart TB
 
 | 模式 | 说明 | 示例 |
 |------|------|------|
-| `prefix` | 前缀精确匹配 | `/weather` 匹配 `/weather` |
+| `prefix` | 前缀精确匹配，支持多词命令（如 `/ca analyse` 整体作为命令） | `/weather` 匹配 `/weather` |
 | `keyword` | 关键词包含匹配 | `/天气` 中 "天气" 匹配 `/北京天气` |
 | `regex` | 正则表达式匹配 | `/roll\s+\d+d\d+` 匹配 `/roll 2d6` |
 
@@ -70,6 +70,8 @@ class MyPlugin(PluginBase):
         # 自动从 CommandAST 提取 city 和 format
         ...
 ```
+
+> **多词命令**：prefix 模式的 pattern 可以包含空格（如 `/ca analyse`），系统会自动将匹配到的后续位置参数归入命令名，实现多词命令。
 
 ### 定时事件 (PluginScheduler)
 

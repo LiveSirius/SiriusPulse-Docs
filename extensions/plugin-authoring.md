@@ -110,7 +110,7 @@ plugins/
 @command(
     name: str,                  # 指令名
     prefix: str = "",           # 前缀（/ # !）
-    patterns: list[str] = None, # 触发词列表
+    patterns: list[str] = None, # 触发词列表（支持空格分隔的多词模式）
     pattern_type: str = "prefix",  # prefix / keyword / regex
     description: str = "",      # 描述（会注入 LLM prompt）
     examples: list[str] = None, # 使用示例
@@ -139,6 +139,8 @@ async def echo(self, message: str, count: int = 1, uppercase: bool = False):
 ```
 
 用户输入 `/echo hello --count=3 --uppercase` → `echo("hello", 3, True)`
+
+> **注意**：如果命令定义为多词模式（如 `"ca analyse"`），`analyse` 会作为命令的一部分而非第一个位置参数，因此位置参数的数量会相应减少。系统会自动处理，插件开发者无需额外操作。
 
 系统通过 `inspect.signature` 和 `get_type_hints` 解析 handler 参数，自动映射：
 - 位置参数 → 从 `cmd.args` 按序消费
