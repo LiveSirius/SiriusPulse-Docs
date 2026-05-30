@@ -376,10 +376,43 @@ flowchart TD
         Memory["记忆层"]
         SkillData["SKILL 数据"]
         Logs["日志"]
+        UnifiedDB["persona.db<br/>统一数据库"]
     end
 
     subgraph Config
-        C1["persona.json<br/>人格定义"]
+        Files["adapters.json<br/>experience.json<br/>orchestration.json<br/>persona.json"]
+    end
+
+    subgraph State
+        WorkerStatus["worker_status.json<br/>心跳状态"]
+        EngineState["engine_state/<br/>热重载标记"]
+    end
+
+    subgraph Memory
+        Basic["basic_store/ (prompts)"]
+        Episode["episode_store/ (episodes)"]
+        Diary["diary/ (diaries)"]
+    end
+
+    subgraph SkillData
+        Reminder["reminder.json"]
+    end
+
+    subgraph Logs
+        WorkerLog["worker.log"]
+        EngineLog["engine.log"]
+    end
+
+    subgraph UnifiedDB
+        Users["users / user_identities / group_members / aliases"]
+        GroupProfiles["group_semantic_profiles<br/>+ atmosphere_history<br/>+ group_pending_ai_responses"]
+        TokenUsage["token_usage"]
+        Cognition["cognition_events / decision_events"]
+        Sessions["session_* 表"]
+    end
+```
+
+**统一数据库说明**：原来存储于独立 `memory.db`、`token_usage.db`、`cognition_events.db` 和各会话目录下 `session_state.db` 的数据，现已全部合并到统一的 `persona.db` 中。`group_semantic_profiles` 表新增了 `group_name`、`interest_topics`、`group_norms`、`taboo_topics`、`dominant_topic` 字段以支持更丰富的群体画像。新增 `atmosphere_history` 表和 `group_pending_ai_responses` 表分别记录群体氛围历史与 AI 待回复记录。     C1["persona.json<br/>人格定义"]
         C2["orchestration.json<br/>模型编排"]
         C3["adapters.json<br/>平台适配器"]
         C4["experience.json<br/>体验参数"]
