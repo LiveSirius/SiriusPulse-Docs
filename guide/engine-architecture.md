@@ -153,6 +153,20 @@ Brain 是引擎的 LLM 调用层，支持：
 | 状态持久化 | 300s | 全量保存运行时状态 |
 | 提醒检查 | 10s | 到期提醒分发（来自 reminder skill） |
 
+## 配置热重载
+
+引擎支持通过标志文件热重载以下配置类型：
+
+| 重载类型 | 说明 |
+|---------|------|
+| `persona` | 人格配置（包括提示词、角色设定等） |
+| `orchestration` | 编排配置（模型路由、LLM 参数等） |
+| `experience` | 经验配置（情感、记忆等） |
+| `provider` | 提供商配置（provider_keys.json 中的模型列表、API key 等） |
+| `all` | 全部重载 |
+
+当 WebUI 中修改并保存 `provider_keys.json` 或开发者调用 `refresh_models_from_dev` 时，系统会自动向所有运行中的人格写入 `provider` 重载标志，由 PersonaWorker 的后台循环读取并执行热重载，无需重启引擎。
+
 ## 记忆持久化
 
 引擎在以下时机进行持久化：
