@@ -73,6 +73,30 @@ class MyPlugin(PluginBase):
 
 > **多词命令**：prefix 模式的 pattern 可以包含空格（如 `/ca analyse`），系统会自动将匹配到的后续位置参数归入命令名，实现多词命令。
 
+### @command_group / @group_command 装饰器（指令组）
+
+将相关命令组织成层级结构，使用 `@command_group` 在类方法上声明指令组入口，使用 `@group_command` 声明子命令。
+
+```python
+from sirius_pulse.plugins import PluginBase, command_group, group_command, PluginResponse
+
+class ChatAnalyzerPlugin(PluginBase):
+    @command_group("ca", prefix="/", patterns=["ca"],
+                   description="聊天分析工具集")
+    def ca_group(self):
+        pass  # 指令组入口，不需要实现
+
+    @group_command("analyse", patterns=["analyse", "analyze"],
+                   description="分析聊天记录")
+    async def analyse(self, target: str, period: str = "7d") -> PluginResponse:
+        data = await self._analyse_chat(target, period)
+        return PluginResponse.ok(data=data)
+```
+
+> **嵌套指令组**：通过 `parent` 参数支持嵌套，如 `@command_group("report", parent="ca")` 定义 `ca.report` 组，子命令通过 `@group_command("daily", parent="ca.report")` 注册。
+
+指令组的匹配路径为 `[组名]` 或 `[父组名, 子组名]`，子命令路径为 `[组路径..., 命令名]`。用户输入如 `/ca analyse` 会自动路由到 `ca` 组下的 `analyse` 子命令。
+
 ### 定时事件 (PluginScheduler)
 
 插件可以注册定时触发的事件，通过 `_plugin_events` 属性定义 cron 表达式或固定间隔。系统启动时，PluginScheduler 会根据这些定义创建定时任务，在到期时调用插件的 `on_event()` 方法。支持失败退避和自动停用机制。

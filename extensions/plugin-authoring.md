@@ -10,6 +10,8 @@
 from sirius_pulse.plugins.api import (
     PluginBase,               # 插件基类（所有插件必须继承）
     command,                  # 声明式指令注册装饰器
+    command_group,            # 声明式指令组注册装饰器
+    group_command,            # 声明式子命令注册装饰器
     DispatchedOutput,         # 调度后的输出结构
     PluginResponse,           # 返回结果
     PluginContext,            # 运行时上下文
@@ -17,9 +19,12 @@ from sirius_pulse.plugins.api import (
     PluginDataStore,          # 持久化 KV 存储
     CommandAST,               # 指令抽象语法树
     PluginCommandMeta,        # @command 装饰器记录的元数据
+    PluginCommandGroupMeta,   # @command_group 装饰器记录的元数据
+    GroupCommandMeta,         # @group_command 装饰器记录的元数据
     RenderMode,               # 输出策略枚举
     TriggerType,              # 触发方式枚举
     PatternType,              # 匹配模式枚举
+    PluginCommandGroupDef,    # 指令组定义
 )
 ```
 
@@ -123,6 +128,109 @@ plugins/
     timeout: float = 0.0,            # 指令级超时（0 使用全局默认）
 )
 ```
+
+## @command_group / @group_command 指令组
+
+指令组用于将一组相关的子命令组织在一起，形成层级结构。例如，一个聊天分析插件可以定义 `/ca analyse`、`/ca report daily` 等子命令。
+
+指令组使用两个装饰器：
+- `@command_group`：声明指令组入口（一个空方法，不需要具体实现）
+- `@group_command`：声明指令组内的子命令（具体处理逻辑）
+
+### @command_group 装饰器
+
+```python
+@command_group(
+    name: str,                  # 指令组名（如 "ca"）
+    prefix: str = "",           # 指令前缀（/ # !）
+    patterns: list[str] = None, # 触发词列表（不含前缀）
+    pattern_type: str = "prefix",  # prefix / keyword / regex
+    description: str = "",      # 指令组描述
+    examples: list[str] = None, # 使用示例
+    hidden_from_intent: bool = False,  # 对意图识别隐藏
+    parent: str = "",          # 父指令组名（用于嵌套）
+)
+```
+
+### @group_command 装饰器
+
+```python
+@group_command(
+    name: str,                  # 子命令名（如 "analyse"）
+    patterns: list[str] = None, # 触发词列表（不含前缀和组名）
+    pattern_type: str = "prefix",  # prefix / keyword / regex
+    render_mode: str = "direct",   # direct / llm / silent
+    description: str = "",      # 子命令描述
+    examples: list[str] = None, # 使用示例
+    hidden_from_intent: bool = False,  # 对意图识别隐藏
+    parent: str = "",          # 父指令组路径（如 "ca" 或 "ca.report"）
+    system_prompt_suffix: str = "",   # LLM 模式的附加提示
+    max_tokens: int = 500,           # LLM 模式最大 token
+    temperature: float = 0.8,        # LLM 模式温度
+    mood_hint: str = "",             # LLM 模式情绪提示
+    timeout: float = 0.0,            # 单次执行超时（0 使用全局默认）
+)
+```
+
+### 使用示例
+
+```python
+from sirius_pulse.plugins.api import PluginBase, command_group, group_command, PluginResponse
+
+class ChatAnalyzerPlugin(PluginBase):
+    """聊天分析插件"""
+    
+    # 定义指令组入口 /ca
+    @command_group(
+        name="ca",
+        prefix="/",
+        patterns=["ca"],
+        description="聊天分析工具集",
+        examples=["/ca analyse 群聊1 30d", "/ca report daily"],
+    )
+    def ca_group(self):
+        """指令组入口，不需要实现具体逻辑"""
+        pass
+    
+    # 子命令 /ca analyse
+    @group_command(
+        name="analyse",
+        patterns=["analyse", "analyze"],
+        description="分析聊天记录",
+        parent="ca",
+    )
+    async def analyse(self, target: str, period: str = "7d") -> PluginResponse:
+        # 实现分析逻辑
+        return PluginResponse.ok(text=f"分析 {target} 过去 {period} 的聊天记录")
+    
+    # 嵌套指令组 /ca report
+    @command_group(
+        name="report",
+        patterns=["report"],
+        description="报告生成",
+        parent="ca",
+    )
+    def report_group(self):
+        pass
+    
+    # 嵌套子命令 /ca report daily
+    @group_command(
+        name="daily",
+        patterns=["daily"],
+        description="生成每日报告",
+        parent="ca.report",
+    )
+    async def daily_report(self) -> PluginResponse:
+        return PluginResponse.ok(text="生成每日报告")
+```
+
+用户输入 `/ca analyse 群聊1 30d` 会被路由到 `analyse` 方法，输入 `/ca report daily` 会被路由到 `daily_report` 方法。
+
+> 注意：指令组的 `patterns` 和子命令的 `patterns` 共同构成完整的触发路径。框架会自动匹配层级关系。
+
+### 参数自动提取
+
+`@group_command` 装饰的方法同样支持参数自动提取，规则与 `@command` 完全一致（见上方“参数自动提取”章节）。
 
 ### 参数自动提取
 
