@@ -112,50 +112,49 @@ per-group deque:
 - 自己的回复 → 记录群聊互动状态
 - 用户的消息 → 更新用户交互统计
 
-## 人物传记（Biography）
+## 统一用户模型（UnifiedUser）
 
-`UnifiedUserManager` 统一管理用户身份、别名和人物画像，通过两层 LLM 凝练构建：
+统一用户模型整合了原来的用户管理（`UserManager`）和人物传记（`BiographyManager`），通过 `UnifiedUserManager` 统一管理每个用户（跨群）的认知信息。
 
-1. **层1 蒸馏（distill）**：攒够 5 条消息或 8 小时后，LLM 从原始对话中提炼关于该用户的关键要点和别名
-2. **层2 传记更新（update）**：攒够 3 个蒸馏要点或 24 小时后，LLM 综合旧传记和新要点，重写完整的用户档案
+### 核心模型 `UnifiedUser`
 
-### 传记卡结构
-
-每张 `UserPersonaCard` 包含：
+每个用户对应一个 `UnifiedUser` 实例（通过 `user_id` 标识），包含以下字段：
 
 | 字段 | 说明 |
 |------|------|
+| `name` | 用户显示名（可跨群更新） |
+| `aliases` | 跨群收敛的别名列表（`AliasEntry`，含置信度、来源） |
 | `short_bio` | 浓缩传记全文（不超过 500 字），描述用户身份、性格、偏好、习惯 |
-| `aliases` | 跨群收敛的别名列表 |
 | `identity_anchors` | 身份锚点（最多 5 条，每条不超过 20 字） |
-| `relationships` | 该用户与其他人的关系网络（含 target_user_id、关系类型、事实描述、提及次数、时间戳） |
-| `affinity_score` | 用户对 AI 的亲和力分数（-1.0=敌对, 0.0=中立, 1.0=友好），由 LLM 在层2更新时输出，经 EMA 平滑 |
+| `relationships` | 该用户与其他人的关系网络（`RelationshipAnchor`，含 target_user_id、关系类型、事实描述、提及次数、时间戳） |
+| `affinity_score` | 用户对 AI 的亲和力分数（-1.0=敌对, 0.0=中立, 1.0=友好），由 LLM 逐层更新时输出，经 EMA 平滑 |
+| `metadata` | 附加元数据（如开发者标记 `is_developer`） |
 
 ### 别名管理
 
-别名注册采用四层防御机制，防止错误地将某用户的别名关联到其他用户：
+别名注册沿用四层防御机制（人格身份隔离、LLM 冲突校验、子串冲突校验、标准注册），由 `UnifiedUserManager` 维护全局别名速查表。
 
-1. **人格身份隔离**：人格自身的名称和别名被硬隔离，不会被注册到任何其他用户名下
-2. **LLM 来源冲突校验**：LLM 发现的别名若已是已知用户的主名，拒绝注册
-3. **子串冲突校验**：别名包含已知其他用户有效名（去标点后 ≥2 字）时自动跳过（如 "前前前世哥哥" 包含 "前前前世"）
-4. **标准注册/更新**：通过以上防御后执行注册，新建时按来源设置初始置信度
-
-- **别名置信度**：基于 `compute_confidence(mentioned_count, source)` 计算，napcat 来源首次 0.50，LLM 发现首次 0.30，后续对数增长
-- **时间衰减**：每过去一天置信度衰减 5%，低于 0.10 阈值自动删除
-
-别名数据通过 `get_aliases_for_group(group_id)` 接口暴露给认知分析器，用于帮助 LLM 区分消息发送者使用的称呼是指向 AI 还是指向其他用户。
+- **别名置信度**：首次注册时 napcat 来源 0.50，LLM 发现 0.30，后续随提及次数对数增长
+- **时间衰减**：每过去一天置信度衰减 5%，低于 0.10 自动删除
+- 别名数据通过 `get_aliases_for_group(group_id)` 接口暴露给认知分析器
 
 ### 亲和力反馈回路
 
-传记中的 `affinity_score` 会反馈到引擎的决策阶段：
+`affinity_score` 反馈到引擎决策阶段：
 
 - `affinity > 0.3`（友好）→ 响应阈值降低，最多降至 0.75x
 - `affinity < -0.3`（不友好）→ 响应阈值提高，最多升至 1.40x
-- LLM 未更新过传记的用户不触发调节
+- LLM 未更新过信息（`affinity_score` 为默认值）的用户不触发调节
 
 ### 信息注入
 
-传记信息会被 `PromptFactory.build_biography_section()` 格式化为 `【人物速查】` 段落，注入到 system prompt 中供 LLM 参考。
+用户信息通过 `PromptFactory.build_biography_section()` 格式化为 `【人物速查】` 段落，注入到 system prompt 中供 LLM 参考。
+
+### 蒸馏与更新（两层凝练）
+
+`UnifiedUserManager` 继承原 `BiographyManager` 的两层凝练架构：
+1. **层1 蒸馏（distill）**：攒够 5 条消息或 8 小时后，LLM 从原始对话中提炼关于该用户的关键要点和别名
+2. **层2 传记更新（update）**：攒够 3 个蒸馏要点或 24 小时后，LLM 综合旧传记和新要点，重写完整的用户档案（`short_bio`、`identity_anchors`、`relationships`、`affinity_score`）
 
 ## 术语表（Glossary）
 
