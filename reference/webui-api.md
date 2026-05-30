@@ -110,6 +110,37 @@ GET /api/memory/{persona_name}/users/{user_id}
 GET /api/biography/{persona_name}
 ```
 
+### 获取对话历史
+
+```
+GET /api/personas/{name}/conversations
+```
+
+查询参数：
+- `group_id`（可选）：筛选指定群组
+- `limit`（可选）：返回条数，默认100
+- `offset`（可选）：偏移量，用于分页
+
+响应：
+```json
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "你好",
+      "group_id": "123",
+      "tags": [
+        {"type": "sticker", "label": "表情包: 开心"}
+      ]
+    }
+  ],
+  "total": 500,
+  "has_more": true
+}
+```
+
+`tags` 字段用于标识消息中的特殊内容，如表情包、图片、@提及、技能调用等。
+
 ## Plugin 管理
 
 ### 获取插件列表
