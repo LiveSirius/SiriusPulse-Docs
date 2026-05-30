@@ -114,7 +114,7 @@ per-group deque:
 
 ## 人物传记（Biography）
 
-`BiographyManager` 管理跨对话的人物画像，通过两层 LLM 凝练构建：
+`UnifiedUserManager` 统一管理用户身份、别名和人物画像，通过两层 LLM 凝练构建：
 
 1. **层1 蒸馏（distill）**：攒够 5 条消息或 8 小时后，LLM 从原始对话中提炼关于该用户的关键要点和别名
 2. **层2 传记更新（update）**：攒够 3 个蒸馏要点或 24 小时后，LLM 综合旧传记和新要点，重写完整的用户档案
