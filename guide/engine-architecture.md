@@ -92,6 +92,17 @@ flowchart TB
 - 传记亲和力（biography affinity）
 - 人格回复频率偏置
 
+### 消息前缀过滤（MessagePrefixFilter）
+
+根据配置的 `message_prefixes` 列表，在决策阶段对消息内容进行前缀匹配。若消息以任一前缀开头（去除前导空格后），则直接跳过回复流程，返回 `SILENT` 策略。此过滤发生在阈值计算之后、策略选择之前，不会影响已匹配的插件命令。
+
+配置示例：
+```json
+{
+  "message_prefixes": ["#", "!"]
+}
+```
+
 ### 策略引擎（ResponseStrategyEngine）
 
 根据阈值和意图选择策略：
