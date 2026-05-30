@@ -161,6 +161,53 @@ per-group deque:
 
 `GlossaryManager` 管理自定义术语/黑话解释。`learn_term` 技能可以动态添加术语。
 
+## 消息钉住（Pinned Messages）
+
+消息钉住功能允许 AI 在对话上下文中保留重要信息，即使这些信息超出短期记忆窗口。钉住的消息会随每次 prompt 注入到上下文中，直到达到携带次数上限或时间过期。
+
+### 核心参数
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `MAX_PINNED_MESSAGES` | 10 | 全局最大可钉住消息数量 |
+| `PINNED_MESSAGE_MAX_AGE_HOURS` | 24 | 钉住消息最大保留时间（小时） |
+| `PINNED_MESSAGE_MAX_CARRY_COUNT` | 100 | 钉住消息最大携带次数（每次 prompt 注入计数+1，超过后自动取消） |
+
+### 消息钉住管理器
+
+`PinnedMessageManager` 负责管理钉住消息的生命周期，支持以下操作：
+
+- `pin_message()`: 钉住一条消息，可指定内容、发言人、群组、原因、TTL、最大携带次数
+- `unpin_message()`: 根据消息 ID 取消钉住
+- `unpin_by_reason()`: 根据原因取消钉住（如“钉住此规则”）
+- `unpin_by_content()`: 根据内容关键词取消钉住
+- `unpin_all()`: 取消指定群组的所有钉住
+- `get_pinned_messages_for_prompt()`: 获取钉住消息并增加携带计数，用于 prompt 注入
+
+### 钉住/取消钉住指令
+
+AI 在回复中使用特殊语法来钉住或取消钉住消息：
+
+- 钉住：`<pin reason="原因">需要保留的内容</pin>`
+- 取消钉住：`<unpin reason="原因"/>` 或 `<unpin all/>`
+
+系统会自动解析这些指令并执行对应的钉住/取消钉住操作。
+
+### 信息注入
+
+钉住消息会在构建 prompt 时被注入到 system prompt 中，格式为：
+
+```
+【钉住消息】
+- 内容...
+```
+
+`ContextAssembler` 在 `build_messages()` 中会调用 `pinned_messages_fn` 获取当前群组的有效钉住消息，并将其添加到系统提示中。
+
+### 携带计数与自动过期
+
+每条钉住消息记录 `carry_count`，每次被用于 prompt 注入时加 1。当 `carry_count` 超过 `MAX_CARRY_COUNT` 时，消息自动取消钉住。同时，超过 `MAX_AGE_HOURS` 的消息也会被清理。
+
 ## 配置调优
 
 在 `experience.json` 中控制记忆行为：
@@ -168,12 +215,14 @@ per-group deque:
 ```json
 {
   "memory_depth": 5,
-  "cross_group_memory": true
+  "cross_group_memory": true,
+  "pinned_message_max_carry_count": 100
 }
 ```
 
 - `memory_depth`: 每次加载的历史消息数
 - `cross_group_memory`: 是否启用跨群记忆
+- `pinned_message_max_carry_count`: 钉住消息的最大携带次数，超过后自动取消
 
 ## 数据流示例
 
