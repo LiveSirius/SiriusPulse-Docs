@@ -13,6 +13,8 @@ AutoRoutingProvider（自动路由）
             ├── OpenAICompatibleProvider
             ├── AliyunBailianProvider
             ├── DeepSeekProvider
+            ├── MimoProvider
+            ├── MimoTokenPlanProvider
             ├── SiliconFlowProvider
             ├── VolcengineArkProvider
             ├── BigModelProvider
@@ -28,6 +30,7 @@ AutoRoutingProvider（自动路由）
 | `openai_compatible.py` | OpenAI 兼容 Provider |
 | `aliyun_bailian.py` | 阿里云百炼 Provider |
 | `deepseek.py` | DeepSeek Provider |
+| `mimo.py` | 小米 MiMo Provider（按量付费 + Token Plan） |
 | `siliconflow.py` | SiliconFlow Provider |
 | `volcengine_ark.py` | 火山引擎方舟 Provider |
 | `bigmodel.py` | 智谱 BigModel Provider |
@@ -37,15 +40,17 @@ AutoRoutingProvider（自动路由）
 
 ## 支持的提供商平台
 
-| 平台 | 类型标识 | 默认 Base URL |
-|------|----------|---------------|
-| OpenAI 兼容 | `openai-compatible` | `https://api.openai.com` |
-| 阿里云百炼 | `aliyun-bailian` | `https://dashscope.aliyuncs.com/compatible-mode` |
-| DeepSeek | `deepseek` | `https://api.deepseek.com` |
-| SiliconFlow | `siliconflow` | `https://api.siliconflow.cn` |
-| 火山引擎方舟 | `volcengine-ark` | `https://ark.cn-beijing.volces.com/api/v3` |
-| 智谱 BigModel | `bigmodel` | `https://open.bigmodel.cn/api/paas/v4` |
-| YTea | `ytea` | `https://api.ytea.top` |
+| 平台 | 类型标识 | 默认 Base URL | API Key 格式 |
+|------|----------|---------------|-------------|
+| OpenAI 兼容 | `openai-compatible` | `https://api.openai.com` | 自定义 |
+| 阿里云百炼 | `aliyun-bailian` | `https://dashscope.aliyuncs.com/compatible-mode` | `sk-xxx` |
+| DeepSeek | `deepseek` | `https://api.deepseek.com` | `sk-xxx` |
+| 小米 MiMo | `mimo` | `https://api.xiaomimimo.com/v1` | `sk-xxx` |
+| 小米 MiMo Token Plan | `mimo-tokenplan` | `https://token-plan-cn.xiaomimimo.com/v1` | `tp-xxx` |
+| SiliconFlow | `siliconflow` | `https://api.siliconflow.cn` | `sk-xxx` |
+| 火山引擎方舟 | `volcengine-ark` | `https://ark.cn-beijing.volces.com/api/v3` | `ark-xxx` |
+| 智谱 BigModel | `bigmodel` | `https://open.bigmodel.cn/api/paas/v4` | `xxx` |
+| YTea | `ytea` | `https://api.ytea.top` | `sk-xxx` |
 
 ## ProviderConfig
 

@@ -17,14 +17,16 @@
 
 ## 支持的 Provider
 
-| Provider | 键名 | 默认 API 地址 |
-|----------|------|-------------|
-| DeepSeek | `deepseek` | `https://api.deepseek.com` |
-| SiliconFlow | `siliconflow` | `https://api.siliconflow.cn/v1` |
-| 阿里云百炼 | `aliyun_bailian` | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
-| 火山方舟 | `volcengine_ark` | `https://ark.cn-beijing.volces.com/api/v3` |
-| 智谱 BigModel | `bigmodel` | `https://open.bigmodel.cn/api/paas/v4` |
-| OpenAI 兼容 | `openai_compatible` | 自定义 |
+| Provider | 键名 | 默认 API 地址 | API Key 格式 |
+|----------|------|-------------|-------------|
+| DeepSeek | `deepseek` | `https://api.deepseek.com` | `sk-xxx` |
+| SiliconFlow | `siliconflow` | `https://api.siliconflow.cn/v1` | `sk-xxx` |
+| 阿里云百炼 | `aliyun_bailian` | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `sk-xxx` |
+| 火山方舟 | `volcengine_ark` | `https://ark.cn-beijing.volces.com/api/v3` | `ark-xxx` |
+| 智谱 BigModel | `bigmodel` | `https://open.bigmodel.cn/api/paas/v4` | `xxx` |
+| 小米 MiMo | `mimo` | `https://api.xiaomimimo.com/v1` | `sk-xxx` |
+| 小米 MiMo Token Plan | `mimo-tokenplan` | `https://token-plan-cn.xiaomimimo.com/v1` | `tp-xxx` |
+| OpenAI 兼容 | `openai_compatible` | 自定义 | 自定义 |
 
 ---
 
