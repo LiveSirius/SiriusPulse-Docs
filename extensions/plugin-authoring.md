@@ -120,7 +120,7 @@ plugins/
     description: str = "",      # 描述（会注入 LLM prompt）
     examples: list[str] = None, # 使用示例
     render_mode: str = "direct",   # direct / llm / silent
-    hidden_from_intent: bool = False,  # 对意图识别隐藏
+    hidden_from_intent: bool = False,  # 仅阻止自然语言触发，不阻止显式命令（以 /、#、! 开头的命令）
     system_prompt_suffix: str = "",   # LLM 模式的附加提示
     max_tokens: int = 500,           # LLM 模式最大 token
     temperature: float = 0.8,        # LLM 模式温度
@@ -147,7 +147,7 @@ plugins/
     pattern_type: str = "prefix",  # prefix / keyword / regex
     description: str = "",      # 指令组描述
     examples: list[str] = None, # 使用示例
-    hidden_from_intent: bool = False,  # 对意图识别隐藏
+    hidden_from_intent: bool = False,  # 仅阻止自然语言触发，不阻止显式命令
     parent: str = "",          # 父指令组名（用于嵌套）
 )
 ```
@@ -162,7 +162,7 @@ plugins/
     render_mode: str = "direct",   # direct / llm / silent
     description: str = "",      # 子命令描述
     examples: list[str] = None, # 使用示例
-    hidden_from_intent: bool = False,  # 对意图识别隐藏
+    hidden_from_intent: bool = False,  # 仅阻止自然语言触发，不阻止显式命令
     parent: str = "",          # 父指令组路径（如 "ca" 或 "ca.report"）
     system_prompt_suffix: str = "",   # LLM 模式的附加提示
     max_tokens: int = 500,           # LLM 模式最大 token
@@ -508,7 +508,7 @@ class MyPlugin(PluginBase):
         {"name": "api_key", "type": "password", "description": "API 密钥", "required": True},
         {"name": "max_results", "type": "int", "description": "最大结果数", "default": 10},
     ]
-    
+
     @command(name="search")
     async def search(self, query: str) -> PluginResponse:
         # 从 data_store 读取配置

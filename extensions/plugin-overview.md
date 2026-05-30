@@ -73,6 +73,8 @@ class MyPlugin(PluginBase):
 
 > **多词命令**：prefix 模式的 pattern 可以包含空格（如 `/ca analyse`），系统会自动将匹配到的后续位置参数归入命令名，实现多词命令。
 
+> **统一分发**：系统会同时检查 `@command`、`@command_group` 和 `@group_command` 装饰器，一旦发现任意装饰器，都使用装饰器分发机制执行，不再调用传统的 `execute()` 方法。
+
 ### @command_group / @group_command 装饰器（指令组）
 
 将相关命令组织成层级结构，使用 `@command_group` 在类方法上声明指令组入口，使用 `@group_command` 声明子命令。
