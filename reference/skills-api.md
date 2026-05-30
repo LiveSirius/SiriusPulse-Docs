@@ -244,9 +244,66 @@ parameters = build_parameters_from_class(MySkillConfig)
 
 参数定义的内部数据类，一般无需手动构造。
 
+```python
+@dataclass
+class ParamDefinition:
+    name: str
+    type: str = "str"
+    description: str = ""
+    required: bool = False
+    default: Any = None
+    choices: list[str] | None = None
+    group: str = ""
+    fields: list[dict[str, Any]] | None = None
+```
+
+### 支持的参数类型
+
+WebUI 会根据参数类型自动渲染对应的表单控件：
+
+| 参数类型 | 渲染控件 | 说明 |
+|---------|---------|------|
+| `str` / `string` | 文本输入框 | 普通文本输入 |
+| `int` / `number` | 数字输入框 | 带 +/- 按钮的数字调节器 |
+| `float` | 数字输入框 | 同上，支持小数 |
+| `boolean` | 复选框 | 勾选框 |
+| `list` / `array` | 列表编辑器 | 可添加/删除列表项 |
+| `model` | 下拉选择框 | 自动获取可用模型列表 |
+| `password` / `secret` | 密码输入框 | 带显示/隐藏切换按钮 |
+| `object_array` | 对象数组编辑器 | 用于编辑结构化数组数据，需要定义 `fields` |
+| `checkbox_group` | 复选框组 | 多选一或多选多，需要定义 `choices` |
+
+### 参数分组
+
+使用 `group` 参数可以将相关配置项分组显示，在 WebUI 中会以折叠面板的形式呈现：
+
+```python
+_builder = ConfigBuilder()
+_builder.group("基础设置").add("name", type="str", description="名称", required=True)
+_builder.group("基础设置").add("description", type="str", description="描述")
+_builder.group("高级选项").add("timeout", type="int", description="超时时间", default=30)
+_builder.group("高级选项").add("retry", type="boolean", description="启用重试", default=True)
+```
+
 ### 使用场景
 
 在技能模块中，将生成的 `parameters` 列表赋值给 `SKILL_META["parameters"]`，即可在 WebUI 中呈现配置表单。
+
+```python
+from sirius_pulse import ConfigBuilder
+
+_builder = ConfigBuilder()
+_builder.group("认证").add("api_key", type="password", description="API 密钥", required=True)
+_builder.group("模型").add("model", type="model", description="使用的模型")
+_builder.group("模型").add("temperature", type="float", description="温度", default=0.7)
+
+SKILL_META = {
+    "name": "my_skill",
+    "description": "我的技能",
+    "version": "1.0",
+    "parameters": _builder.build(),  # 使用 ConfigBuilder 生成的参数列表
+}
+```
 
 ## 数据持久化
 

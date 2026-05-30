@@ -429,6 +429,85 @@ class PluginParameterDef(ConfigParameter):
 
 ---
 
+## WebUI 配置表单
+
+框架提供了 WebUI 配置界面，让用户可以在网页上可视化地配置插件参数。
+
+### 配置参数定义
+
+在插件类中定义 `_plugin_parameters` 类属性来声明配置参数：
+
+```python
+class MyPlugin(PluginBase):
+    _plugin_name = "my_plugin"
+    _plugin_parameters = [
+        {"name": "api_key", "type": "password", "description": "API 密钥", "required": True, "group": "认证"},
+        {"name": "model", "type": "model", "description": "使用的模型", "group": "模型"},
+        {"name": "temperature", "type": "float", "description": "温度", "default": 0.7, "group": "模型"},
+    ]
+```
+
+也可以使用 `ConfigBuilder` 构建：
+
+```python
+from sirius_pulse import ConfigBuilder
+
+_builder = ConfigBuilder()
+_builder.group("认证").add("api_key", type="password", description="API 密钥", required=True)
+_builder.group("模型").add("model", type="model", description="使用的模型")
+_builder.group("模型").add("temperature", type="float", description="温度", default=0.7)
+
+class MyPlugin(PluginBase):
+    _plugin_name = "my_plugin"
+    _plugin_parameters = _builder.build()
+```
+
+### 支持的参数类型
+
+WebUI 会根据参数类型自动渲染对应的表单控件：
+
+| 参数类型 | 渲染控件 | 说明 |
+|---------|---------|------|
+| `str` / `string` | 文本输入框 | 普通文本输入 |
+| `int` / `number` | 数字输入框 | 带 +/- 按钮的数字调节器 |
+| `float` | 数字输入框 | 同上，支持小数 |
+| `boolean` | 复选框 | 勾选框 |
+| `list` / `array` | 列表编辑器 | 可添加/删除列表项 |
+| `model` | 下拉选择框 | 自动获取可用模型列表 |
+| `password` / `secret` | 密码输入框 | 带显示/隐藏切换按钮 |
+| `object_array` | 对象数组编辑器 | 用于编辑结构化数组数据，需要定义 `fields` |
+| `checkbox_group` | 复选框组 | 多选一或多选多，需要定义 `choices` |
+
+### 参数分组
+
+使用 `group` 参数可以将相关配置项分组显示，在 WebUI 中会以折叠面板的形式呈现：
+
+```python
+_plugin_parameters = [
+    {"name": "name", "type": "str", "description": "名称", "required": True, "group": "基础设置"},
+    {"name": "description", "type": "str", "description": "描述", "group": "基础设置"},
+    {"name": "timeout", "type": "int", "description": "超时时间", "default": 30, "group": "高级选项"},
+    {"name": "retry", "type": "boolean", "description": "启用重试", "default": True, "group": "高级选项"},
+]
+```
+
+### 配置值的获取
+
+当用户在 WebUI 中保存配置后，配置值会存储在插件的 `data_store` 中，可以通过 `self.ctx.data_store` 访问：
+
+```python
+@command(name="search")
+async def search(self, query: str) -> PluginResponse:
+    store = self.get_data_store()
+    api_key = store.get("config.api_key", "")
+    max_results = store.get("config.max_results", 10)
+    
+    results = await self.do_search(query, api_key, max_results)
+    return PluginResponse.ok(data=results)
+```
+
+---
+
 ## 枚举
 
 ### RenderMode

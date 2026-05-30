@@ -2,7 +2,7 @@
 
 插件 API 的详细参考文档，请查看：
 
-- [Plugins API 参考](../api/plugins-api) — 每个 API 的详细说明和使用示例
+- [Plugins API 参考](./plugins-api) — 每个 API 的详细说明和使用示例
 
 ## 快速导入
 

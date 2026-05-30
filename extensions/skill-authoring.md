@@ -24,7 +24,7 @@ from sirius_pulse.skills.api import (
 
 这样就不需要记忆分散在 `sirius_pulse.skills.models`、`sirius_pulse.skills.data_store`、`sirius_pulse.skills.executor` 等不同模块的导入路径了。
 
-> 每个 API 的详细说明见 [Skills API 参考](../api/skills-api)。
+> 每个 API 的详细说明见 [Skills API 参考](../reference/skills-api)。
 
 ## 快速上手
 
@@ -99,6 +99,125 @@ def run(greeting: str = "你好", name: str = "大家", **kwargs) -> dict:
 | `list[str]` | 原样使用（JSON 数组） |
 
 参数无默认值的会被视作必填，缺失时报错。
+
+## WebUI 配置表单
+
+框架提供了 WebUI 配置界面，让用户可以在网页上可视化地配置技能参数，而无需手动编辑 JSON 文件。
+
+### 使用 ConfigBuilder 定义配置
+
+推荐使用 `ConfigBuilder` 来定义配置参数，它提供了链式 API 和参数分组功能：
+
+```python
+from sirius_pulse import ConfigBuilder
+
+_builder = ConfigBuilder()
+_builder.group("认证").add("api_key", type="password", description="API 密钥", required=True)
+_builder.group("模型").add("model", type="model", description="使用的模型")
+_builder.group("模型").add("temperature", type="float", description="温度", default=0.7, choices=[0.1, 0.3, 0.5, 0.7, 0.9])
+_builder.group("高级").add("max_results", type="int", description="最大结果数", default=10)
+
+parameters = _builder.build()
+```
+
+### 使用声明式 API 定义配置
+
+也可以使用 `config_param` 和 `secret` 标记字段来定义配置：
+
+```python
+from sirius_pulse import config_param, secret, build_parameters_from_class
+
+class MySkillConfig:
+    api_key: str = secret("API 密钥", required=True, group="认证")
+    model: str = config_param("使用的模型", type="model", group="模型")
+    temperature: float = config_param("温度", default=0.7, group="模型")
+    max_results: int = config_param("最大结果数", default=10, group="高级")
+    enable_cache: bool = config_param("启用缓存", type="boolean", default=True, group="高级")
+
+parameters = build_parameters_from_class(MySkillConfig)
+```
+
+`secret` 是 `config_param` 的快捷方式，自动设置 `type="password"`。
+
+### 支持的参数类型
+
+WebUI 会根据参数类型自动渲染对应的表单控件：
+
+| 参数类型 | 渲染控件 | 说明 |
+|---------|---------|------|
+| `str` / `string` | 文本输入框 | 普通文本输入 |
+| `int` / `number` | 数字输入框 | 带 +/- 按钮的数字调节器 |
+| `float` | 数字输入框 | 同上，支持小数 |
+| `boolean` | 复选框 | 勾选框 |
+| `list` / `array` | 列表编辑器 | 可添加/删除列表项 |
+| `model` | 下拉选择框 | 自动获取可用模型列表 |
+| `password` / `secret` | 密码输入框 | 带显示/隐藏切换按钮 |
+| `object_array` | 对象数组编辑器 | 用于编辑结构化数组数据 |
+| `checkbox_group` | 复选框组 | 多选一或多选多 |
+
+### 参数分组
+
+使用 `group` 参数可以将相关配置项分组显示，在 WebUI 中会以折叠面板的形式呈现：
+
+```python
+_builder = ConfigBuilder()
+_builder.group("基础设置").add("name", type="str", description="名称", required=True)
+_builder.group("基础设置").add("description", type="str", description="描述")
+_builder.group("高级选项").add("timeout", type="int", description="超时时间", default=30)
+_builder.group("高级选项").add("retry", type="boolean", description="启用重试", default=True)
+```
+
+### 完整示例：带 WebUI 配置的搜索技能
+
+```python
+from sirius_pulse import ConfigBuilder
+
+# 定义配置参数
+_builder = ConfigBuilder()
+_builder.group("搜索设置").add("api_key", type="password", description="API 密钥", required=True)
+_builder.group("搜索设置").add("engine", type="str", description="搜索引擎", default="google", choices=["google", "bing", "duckduckgo"])
+_builder.group("搜索设置").add("max_results", type="int", description="最大结果数", default=5)
+_builder.group("高级").add("timeout", type="int", description="请求超时(秒)", default=10)
+_builder.group("高级").add("safe_search", type="boolean", description="安全搜索", default=True)
+
+parameters = _builder.build()
+
+SKILL_META = {
+    "name": "advanced_search",
+    "description": "高级搜索技能，支持多引擎和配置选项",
+    "version": "1.0",
+    "parameters": parameters,  # 使用 ConfigBuilder 生成的参数列表
+}
+
+def run(query: str = "", api_key: str = "", engine: str = "google", 
+        max_results: int = 5, timeout: int = 10, safe_search: bool = True, **kwargs) -> dict:
+    """执行搜索"""
+    if not query:
+        return {"success": False, "error": "请提供搜索关键词"}
+    
+    # 使用配置的参数执行搜索
+    results = perform_search(query, api_key, engine, max_results, timeout, safe_search)
+    
+    return {
+        "success": True,
+        "data": {"results": results},
+        "text": f"找到 {len(results)} 条结果",
+    }
+```
+
+### 配置值的获取
+
+当用户在 WebUI 中保存配置后，配置值会自动注入到 `run` 函数的对应参数中。你也可以通过 `data_store` 手动读取配置：
+
+```python
+def run(query: str = "", data_store=None, **kwargs) -> dict:
+    # 从 data_store 读取配置（如果需要）
+    api_key = data_store.get("config.api_key", "")
+    
+    # 或者直接使用参数（推荐）
+    # api_key 会自动从 kwargs 中提取
+    ...
+```
 
 ## run 函数规范
 
@@ -280,4 +399,4 @@ def run(query: str = "", count: int = 3, data_store=None, **kwargs) -> dict:
 - [被动技能开发](./skill-passive) — 创建后台运行或事件驱动的技能
 - [插件系统总览](./plugin-overview) — 了解另一种扩展方式
 
-> **进阶：** 框架还提供了 [Brain Hook 机制](../api/brain-api)，允许在 LLM 生成前后注入自定义逻辑。适合需要对引擎行为做全局拦截的开发者。
+> **进阶：** 框架还提供了 [Brain Hook 机制](../reference/brain-api)，允许在 LLM 生成前后注入自定义逻辑。适合需要对引擎行为做全局拦截的开发者。

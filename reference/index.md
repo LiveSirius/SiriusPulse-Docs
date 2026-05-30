@@ -12,7 +12,7 @@
 
 - [Python API](./python-api)
 - [WebUI API](./webui-api)
-- [Skills API](../api/skills-api)
-- [Plugins API](../api/plugins-api)
-- [AI API 参考](../api/ai-api)
-- [Brain API](../api/brain-api)
+- [Skills API](./skills-api)
+- [Plugins API](./plugins-api)
+- [AI API 参考](./ai-api)
+- [Brain API](./brain-api)

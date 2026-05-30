@@ -2,7 +2,7 @@
 
 技能 API 的详细参考文档，请查看：
 
-- [Skills API 参考](../api/skills-api) — 每个 API 的详细说明和使用示例
+- [Skills API 参考](./skills-api) — 每个 API 的详细说明和使用示例
 
 ## 快速导入
 
