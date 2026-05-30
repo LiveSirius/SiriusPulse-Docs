@@ -17,6 +17,7 @@ engine._pipeline      # Pipeline: 5 阶段管线
 engine._helpers       # Helpers: 技能集成、工具方法
 engine._persistence   # EnginePersistence: 状态持久化
 engine._sticker       # EngineSticker: 表情包系统
+engine._pinned_manager # PinnedMessageManager: 消息钉住系统
 ```
 
 ## 5 阶段管线
@@ -123,6 +124,45 @@ flowchart TB
 
 非立即回复进入延迟队列，在确认窗口后释放。支持队列合并（连续发送多条消息时合并为一条回复）。
 
+## 消息钉住系统（PinnedMessageManager）
+
+消息钉住系统允许 AI 根据对话语境主动“钉住”重要消息，在后续多条回复的 prompt 中自动注入，确保关键信息不被遗忘。
+
+### 核心配置
+
+从 `experience.json` 中读取 `pinned_message_max_carry_count` 参数，同时项目常量中定义以下默认值：
+
+| 常量名 | 默认值 | 说明 |
+|--------|--------|------|
+| `MAX_PINNED_MESSAGES` | 10 | 最大可钉住消息数量 |
+| `PINNED_MESSAGE_MAX_AGE_HOURS` | 24 | 钉住消息最大保留时间（小时） |
+| `PINNED_MESSAGE_MAX_CARRY_COUNT` | 100 | 钉住消息最大携带次数（超过后自动取消） |
+
+### 钉住指令
+
+AI 在回复内容中可以通过特定语法控制钉住行为：
+
+- **钉住**：`@pin[理由]` 或 `@pin:理由` — 钉住当前回复中的关键内容（理由可选）。
+- **取消钉住**：`@unpin[all]` 取消所有钉住；`@unpin[理由]` 根据原因取消；`@unpin[内容关键词]` 根据内容关键词取消。
+
+引擎在 Post-Hook 链的优先级 15 处解析这些指令并执行对应操作。
+
+### 与 Brain 的集成
+
+在每次生成回复（包括主动行为）时，引擎会通过 `get_pinned_messages_for_prompt()` 获取当前群组的钉住消息列表，并注入到 prompt factory 的 `pinned_messages` 参数中。每次调用会增加钉住消息的携带计数，超过阈值时自动取消钉住。
+
+### 引擎 API
+
+引擎通过 `self._pinned_manager` 暴露以下接口：
+
+- `pin_message(content, speaker, group_id, reason, ...)` — 钉住一条消息
+- `unpin_message(message_id)` — 按 ID 取消
+- `unpin_by_reason(reason)` — 按原因取消
+- `unpin_all(group_id)` — 取消群组所有钉住
+- `get_pinned_messages(group_id=None)` — 获取钉住消息（用于业务逻辑）
+- `get_pinned_messages_for_prompt(group_id)` — 获取并增加携带计数（用于 prompt 注入）
+- `get_pinned_statistics()` — 统计信息
+
 ## Brain 系统
 
 Brain 是引擎的 LLM 调用层，支持：
@@ -133,6 +173,7 @@ Brain 是引擎的 LLM 调用层，支持：
 | 优先级 | Hook | 功能 |
 |--------|------|------|
 | 0 | `_hook_depth` | 对话深度追踪 |
+| 15 | `_hook_pin_messages` | 钉住/取消钉住指令解析 |
 | 20 | `_hook_stickers` | 表情包发送 |
 | 30 | `_hook_dedup` | 回复去重 |
 | 40 | `_hook_memory` | 记忆记录（basic + semantic） |
