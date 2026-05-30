@@ -128,6 +128,8 @@ Brain 是引擎的 LLM 调用层，支持：
 | 40 | `_hook_memory` | 记忆记录（basic + semantic） |
 | 50 | `_hook_timestamp` | 回复时间戳 + 持久化 |
 
+> 回复生成的 `ChatResult` 对象包含 `system_prompt` 字段，存储本次对话使用的完整 system prompt，后续会被写入 basic_store 的 entry 中。
+
 ## 后台任务
 
 引擎运行 6 个后台异步任务：
@@ -150,7 +152,7 @@ Brain 是引擎的 LLM 调用层，支持：
 
 持久化内容包括：basic_memory、basic_store、时间戳、emotion、delay_queue、token_usage、diary、proactive_state。
 
-> 在写入 `basic_memory` 的同时，引擎会将返回的 entry 对象追加到 `basic_store`，用于后续的快速检索和同步。
+> 在写入 `basic_memory` 的同时，引擎会将返回的 entry 对象（包含 `system_prompt` 字段）追加到 `basic_store`，用于后续的快速检索和同步。
 
 
 详见 [记忆系统](./memory-system)。
