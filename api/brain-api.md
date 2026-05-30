@@ -179,6 +179,7 @@ class ChatResult:
     model_name: str                  # 实际使用的模型名
     duration_ms: float               # 生成耗时（毫秒）
     token_record: Any                # token 用量记录
+    system_prompt: str               # 本次对话使用的完整 system prompt
     sticker_names: list[str]         # 识别的表情包名
     has_skill_call: bool             # 是否包含 SKILL_CALL
     skill_calls: list[tuple[str, dict]]  # 提取的 SKILL_CALL 列表
