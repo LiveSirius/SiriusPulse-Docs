@@ -130,7 +130,8 @@ GET /api/personas/{name}/conversations
       "content": "你好",
       "group_id": "123",
       "tags": [
-        {"type": "sticker", "label": "表情包: 开心"}
+        {"type": "sticker", "label": "动画表情 ×2"},
+        {"type": "image", "label": "图片 ×1"}
       ]
     }
   ],
@@ -139,7 +140,10 @@ GET /api/personas/{name}/conversations
 }
 ```
 
-`tags` 字段用于标识消息中的特殊内容，如表情包、图片、@提及、技能调用等。
+`tags` 字段用于标识消息中的特殊内容，如表情包、图片、钉住/取消钉住指令等。
+
+- **用户消息**中的标签：`sticker`（动画表情，label 格式如 `动画表情 ×2`）、`image`（普通图片，label 格式如 `图片 ×3`）
+- **模型回复**中的标签：`sticker`（表情包，label 格式如 `表情包: 开心`）、`pin`（钉住消息）、`unpin`（取消钉住）
 
 ## Plugin 管理
 

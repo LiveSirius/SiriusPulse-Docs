@@ -32,7 +32,7 @@ flowchart TB
     subgraph B[1. Perception 感知]
         B1[身份解析 IdentityResolver]
         B2[用户登记 UserManager]
-        B3[写入 basic_memory]
+        B3[写入 basic_memory（含多模态输入标签）]
         B4[更新时间戳]
     end
 
@@ -191,7 +191,7 @@ Brain 是引擎的 LLM 调用层，支持：
 | 15 | `_hook_pin_messages` | 钉住/取消钉住指令解析 |
 | 20 | `_hook_stickers` | 表情包发送 |
 | 30 | `_hook_dedup` | 回复去重 |
-| 40 | `_hook_memory` | 记忆记录（basic + semantic） |
+| 40 | `_hook_memory` | 记忆记录（basic + semantic），写入模型输出相关标签 |
 | 50 | `_hook_timestamp` | 回复时间戳 + 持久化 |
 
 > 回复生成的 `ChatResult` 对象包含 `system_prompt` 字段，存储本次对话使用的完整 system prompt，后续会被写入 basic_store 的 entry 中。
@@ -223,6 +223,8 @@ Brain 是引擎的 LLM 调用层，支持：
 
 当 WebUI 中修改并保存 `provider_keys.json` 或开发者调用 `refresh_models_from_dev` 时，系统会自动向所有运行中的人格写入 `provider` 重载标志，由 PersonaWorker 的后台循环读取并执行热重载，无需重启引擎。
 
+> **模型选择复合标识**：自 2.0 版本起，WebUI 中模型下拉选项的 `value` 使用 `{provider_type}/{model_name}` 复合格式，以区分来自不同提供商但同名的模型。保存时前端会自动剥离前缀仅保留裸模型名，引擎仍使用裸模型名调用 API。可用模型列表（`available_models`）维护去重后的裸模型名集合。
+
 ## 记忆持久化
 
 引擎在以下时机进行持久化：
@@ -232,7 +234,14 @@ Brain 是引擎的 LLM 调用层，支持：
 
 持久化内容包括：basic_memory、basic_store、时间戳、emotion、delay_queue、token_usage、diary、proactive_state。
 
-> 在写入 `basic_memory` 的同时，引擎会将返回的 entry 对象（包含 `system_prompt`、`tags`、`multimodal_inputs` 字段）追加到 `basic_store`，用于后续的快速检索和同步。
+### 用户消息持久化（感知阶段）
 
+当消息到达时，Pipeline 在感知阶段将消息写入 basic_memory，同时生成多模态输入标签（区分动画表情和普通图片）并附加到 entry.tags，然后将 entry 追加到 basic_store。
+
+### AI 回复持久化（执行阶段）
+
+生成回复后，引擎通过 `_hook_memory` 将回复写入 basic_memory，同时将 entry 对象（包含 `system_prompt`、`tags` 字段，字段值仅记录模型输出相关标签，如表情包、钉住指令）追加到 basic_store，用于后续的快速检索和同步。
+
+> 注意：用户消息的 entry 包含多模态输入标签（图片、动画表情数量），而 AI 回复的 entry 包含模型输出相关标签（表情包名称、钉住/取消钉住操作）。两部分共同形成完整的对话 tagging。
 
 详见 [记忆系统](./memory-system)。
