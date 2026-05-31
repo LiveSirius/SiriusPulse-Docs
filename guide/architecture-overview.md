@@ -302,7 +302,7 @@ flowchart LR
     subgraph BG["内置后台任务（并行运行）"]
         T1["任务1<br/>延迟队列 ticker<br/>智能休眠（3-30s）"]
         T2["任务2<br/>主动触发 checker<br/>每 60 秒"]
-        T3["任务3<br/>日记生成 promoter<br/>每 180 秒"]
+        T3["任务3<br/>日记生成 promoter（含情景提取与补提）<br/>每 180 秒"]
         T4["任务4<br/>日记 consolidator<br/>每 600 秒"]
         T5["任务5<br/>开发者私聊 checker<br/>每 60 秒"]
         T6["任务6<br/>表情包新鲜度更新<br/>每 3600 秒"]
@@ -315,7 +315,7 @@ flowchart LR
 
     T1 -->|"检测话题间隙<br/>触发延迟回复"| Engine["EmotionalGroupChatEngine"]
     T2 -->|"检查沉默群聊<br/>生成主动发言"| Engine
-    T3 -->|"冷群检测<br/>LLM 生成日记"| Engine
+    T3 -->|"冷群检测 → 情景提取(WARM) → 补提情景(COLD) → 从情景生成日记"| Engine
     T4 -->|"合并相似日记"| Engine
     T5 -->|"检查开发者私聊"| Engine
     T6 -->|"衰减 novelty_score<br/>模拟喜新厌旧"| Engine
