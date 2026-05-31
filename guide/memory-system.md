@@ -71,6 +71,20 @@ per-group deque:
 | `DiaryVectorStore` | 日记向量索引（ChromaDB） |
 | `DiaryRetriever` | 语义检索相关日记 |
 | `DiaryConsolidator` | 合并多条日记为更高层的摘要 |
+| `DiarySliceStore` | 日记切片的文件持久化存储（JSON 文件，按群组索引） |
+| `DiarySliceVectorStore` | 日记切片向量的 ChromaDB 持久化索引 |
+| `DiarySliceRetriever` | 日记切片的三路召回检索：语义（ChromaDB）+ 三元组精确匹配 + 关键词降级 |
+
+### 日记切片
+
+当日记归档后，系统自动对生成的日记条目进行切片（`DiarySlicer`），生成一系列结构化片段（`DiarySlice`），每片包含摘要、关键词、时间范围、参与实体及嵌入向量。
+
+- **持久化**：切片通过 `DiarySliceStore` 存储为 JSON 文件，路径为 `{work_path}/diary/slices/{group_id}.json`；同时向量通过 `DiarySliceVectorStore`（基于 ChromaDB）持久化。
+- **三路召回**：`DiarySliceRetriever` 在检索时融合三条路径：
+  1. 语义检索：`DiarySliceVectorStore` 计算查询嵌入与切片嵌入的余弦相似度
+  2. 三元组精确匹配：查询实体命中切片 `triple_subjects` 字段
+  3. 关键词降级：字符重叠率匹配
+- **历史加载**：引擎启动时，`slice_store.load_all()` 加载所有历史切片并注入检索器索引，保证跨会话持续可用。
 
 ### 日记条目结构
 
