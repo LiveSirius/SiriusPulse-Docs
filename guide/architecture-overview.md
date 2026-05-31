@@ -111,7 +111,7 @@ flowchart TD
 - 提供 JWT 认证：admin/viewer 角色权限控制
 - 提供静态页面：Dashboard + 配置面板 + 监控页面
 - 不直接操作 NapCat 进程，只通过 API 与 PersonaManager 交互
-- 保存 Provider 配置后自动通知所有运行中的人格外进程热重载 provider 配置
+- 保存 Provider 配置后自动通知所有运行中的人格外进程热重载 provider 配置；WebUI 的存储相关 API 以只读模式打开数据库，避免与引擎写操作产生锁冲突
 
 **NapCatManager（QQ 管理器）**
 - 管理 NapCat 全局二进制（安装、更新）
