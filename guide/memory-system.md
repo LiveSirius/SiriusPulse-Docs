@@ -44,9 +44,23 @@ per-group deque:
 - **发言人数** (30%): 有多少不同用户参与
 - **最近性** (30%): 距离最后一条消息的时间
 
+### 冷检测（ColdDetector）
+
+`ColdDetector` 根据群聊热度和距离最后一条消息的时间判断冷状态，替代了旧版 `is_cold` 的简单二元判断。
+
+| 状态 | 含义 | 触发条件（示例） |
+|------|------|------------------|
+| `HOT` | 活跃 | 热度高于阈值且间隔短 |
+| `COOLING` | 暂冷 | 热度下降，间隔适中 |
+| `COLD` | 深冷 | 长时间无消息 |
+
+后台任务 `_background_refiner` 会根据冷状态分层处理：
+- `COOLING` → 情景提取（Situation Extraction）：对近期对话进行结构化摘要
+- `COLD` → 日记归档 + 演化链提取：将旧消息归档为日记，同时通过 LLM 提取三元组存入演化链
+
 ## 日记系统（Diary）
 
-当群聊沉寂一段时间后，将 basic_memory 中超出窗口的旧消息归档为结构化日记。
+当群聊进入 `COLD` 状态时，系统将 basic_memory 中超出窗口的旧消息归档为结构化日记。冷状态由 `ColdDetector` 根据热度与沉寂时长综合判定。
 
 ### 组件
 
@@ -80,6 +94,48 @@ per-group deque:
 3. 支持 token 预算控制（`diary_token_budget`）
 
 ## 语义记忆（Semantic Memory）
+
+...
+...（原语义记忆内容不变）
+
+## 演化链（Evolution Chain）
+
+演化链是长期事实记忆的演进系统，以三元组（subject-predicate-obj）形式存储知识，并支持置信度更新、来源溯源与元标签标记。
+
+### 设计目标
+
+- **可演化**：事实可随新证据自动修正或淘汰
+- **可追溯**：每条记录携带来源信息（消息ID、提取模型）
+- **可评估**：置信度反映事实的可信度，支持时间衰减
+
+### 存储结构
+
+每条 `EvolutionRecord` 包含：
+
+| 字段 | 说明 |
+|------|------|
+| `subject` / `predicate` / `obj` | 三元组主语、谓语、宾语 |
+| `subject_user_id` | 主语对应的用户ID（如有） |
+| `status` | 状态：`ACTIVE`、`SUPERSEDED`、`CONFLICTING` |
+| `confidence` | 当前置信度（0.0~1.0） |
+| `initial_confidence` | 初始置信度 |
+| `source_type` | 来源类型：`MetaTag.INFERENCE`（LLM 提取）、`MIGRATION`（数据迁移）、`DIRECT`（直接记录） |
+| `source_group_id` / `source_message_ids` | 来源群组与消息 |
+| `extracted_by_model` | 提取模型标识 |
+
+### 学习机制
+
+- **情景提取（Situation Extraction）**：在群聊暂冷时，`SituationExtractor` 对近期对话进行结构化提取，生成三元组存入演化链
+- **日记知识抽取**：日记归档时，LLM 提取长期观点、关系等事实写入演化链
+- **数据迁移**：旧版 `UnifiedUser` 的 `distilled_points`、`identity_anchors`、`relationships` 通过 `migrate_to_evolution.py` 脚本批量迁移至演化链，标记为 `MetaTag.MIGRATION`，置信度设为 0.5
+
+### 用户画像的演进
+
+`UnifiedUserManager` 不再直接从对话中更新传记，而是依赖演化链中的事实记录进行整合。演化链与传记模型通过以下流程协同：
+
+1. 新事实写入演化链（情景提取 / 日记 / 交互处理）
+2. `UnifiedUserManager` 从演化链中查询与用户相关的高置信度记录
+3. 定期调用 LLM 综合演化链事实重写 `short_bio`、`identity_anchors`、`relationships`
 
 基于群聊统计的长期记忆系统，追踪群聊的氛围规范与用户交互行为（不依赖向量检索）。
 
