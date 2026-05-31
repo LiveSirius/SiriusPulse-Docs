@@ -170,7 +170,7 @@ flowchart TB
 | | 插件 | 技能 |
 |---|---|---|
 | **调用者** | 用户显式命令 | AI 自主决定 |
-| **语法** | `/command args` | `[SKILL_CALL: ...]` |
+| **语法** | `/command args` | `function_call (tools)` |
 | **触发方式** | 文本模式匹配 | LLM 意图驱动 |
 | **开发范式** | 继承 PluginBase + @command | 函数 + SKILL_META |
 | **输出** | direct / llm / silent | 注入 LLM 上下文 |

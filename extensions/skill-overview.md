@@ -7,34 +7,36 @@
 ```mermaid
 flowchart TB
     A["用户消息: 帮我查一下今天深圳天气"] --> B["认知分析<br>AI 决定需要查天气"]
-    B --> C["AI 在回复文本中插入 SKILL_CALL 标记:<br>[SKILL_CALL: bing_search | {&quot;query&quot;: &quot;深圳天气 2026-05-22&quot;}]"]
-    C --> D["parse_skill_calls()<br>提取标记 → SkillExecutor.execute()"]
+    B --> C["AI 通过 function_call 调用技能:<br>{&quot;name&quot;: &quot;bing_search&quot;, &quot;arguments&quot;: {&quot;query&quot;: &quot;深圳天气 2026-05-22&quot;}}"]
+    C --> D["处理 function_call<br>→ SkillExecutor.execute()"]
     D --> E["技能执行结果<br>注入到模型上下文"]
     E --> F["AI 用自然语言整合结果:<br>今天深圳天气晴朗，最高温30°C~"]
 ```
 
 ## 关键概念
 
-### SKILL_CALL 标记
+### function_call 机制
 
-技能调用的核心协议，格式为：
+技能调用通过 OpenAI 风格的 function_call (tools) 机制实现，AI 模型在 tools 参数中声明可用技能，需要在回复中返回函数调用对象。
 
+格式为：
+
+```json
+{"name": "技能名称", "arguments": {"参数名": "参数值"}}
 ```
-[SKILL_CALL: 技能名称 | {"参数名": "参数值"}]
-```
 
-AI 模型会在它认为需要调用技能时，自然地在回复文本中插入此标记。引擎会自动解析、执行并将结果反馈给模型。
+引擎自动处理 function_call 并执行技能。
 
 ### 技能链（Skill Chain）
 
 同一轮对话中可以调用多个技能，后一个技能可以引用前一个技能的结果：
 
-```
-[SKILL_CALL: file_list | {"path": "docs"}]
-[SKILL_CALL: file_read | {"path": "${file_list.results[0].name}"}]
+```json
+{"name": "file_list", "arguments": {"path": "docs"}}
+{"name": "file_read", "arguments": {"path": "${file_list.results[0].name}"}}
 ```
 
-`${skill_name.field}` 语法可以引用链上前置技能的结果。
+`${skill_name.field}` 语法可在参数中引用之前技能的结果。
 
 ### 技能分类
 
@@ -78,7 +80,7 @@ flowchart TB
 
 ```mermaid
 flowchart TB
-    A["[SKILL_CALL: name | {params}]"] --> B["parse_skill_calls(text)<br>提取所有 SKILL_CALL"]
+    A["function_call: {&quot;name&quot;: &quot;技能名&quot;, &quot;arguments&quot;: {...}}"] --> B["Brain 处理 function_call<br>→ SkillRegistry.get(name)"]
     B --> C["SkillRegistry.get(name)<br>查找 SkillDefinition"]
     C --> D["SkillExecutor.execute()<br>执行"]
     D --> E["SkillChainContext.store<br>name, result -> 链上下文缓存"]
@@ -116,7 +118,7 @@ flowchart TB
 | | 技能 | 插件 |
 |---|---|---|
 | **调用者** | AI 决定何时调用 | 用户显式命令 |
-| **语法** | `[SKILL_CALL: ...]` | `/command args` |
+| **语法** | function_call (tools) | `/command args` |
 | **输出** | 反馈给 AI 做自然语言整合 | 直接/LLM 人格化/静默 |
 | **开发** | 写一个 `run` 函数 | 继承 `PluginBase` |
 | **适用** | AI 需要工具完成任务 | 用户需要固定功能命令 |
