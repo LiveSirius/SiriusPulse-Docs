@@ -94,7 +94,7 @@ GET /api/memory/{persona_name}/groups/{group_id}
 ```
 
 响应包含：
-- `entries`: 基础记忆条目列表
+- `entries`: 基础记忆条目列表（每个条目包含 `content`、`role`、`tags`、`conversation_chain` 等字段）
 - `heat`: 群聊热度
 - `diary_entries`: 相关日记
 
@@ -104,11 +104,25 @@ GET /api/memory/{persona_name}/groups/{group_id}
 GET /api/memory/{persona_name}/users/{user_id}
 ```
 
+响应包含：
+- `entries`: 用户记忆条目列表（每个条目包含 `content`、`role`、`tags`、`conversation_chain` 等字段）
+
 ### 获取人物传记
 
 ```
 GET /api/biography/{persona_name}
 ```
+
+响应格式包含以下字段：
+- `name`: 用户名称
+- `aliases`: 别名列表
+- `short_bio`: 简介
+- `identity_anchors`: 身份锚点
+- `relationships`: 关系列表
+- `fact_history`: 事实历史
+- `source_record_ids`: 来源记录 ID
+- `active_fact_count`: 活跃事实数
+- `superseded_fact_count`: 被取代事实数
 
 ### 获取对话历史
 
@@ -133,6 +147,20 @@ GET /api/personas/{name}/conversations
         {"type": "sticker", "label": "动画表情 ×2"},
         {"type": "image", "label": "图片 ×1"}
       ]
+    },
+    {
+      "role": "assistant",
+      "content": "你好呀！今天有什么想聊的？",
+      "group_id": "123",
+      "system_prompt": "你是一个友善的助手。",
+      "conversation_chain": [
+        {"role": "system", "content": "你是一个友善的助手。"},
+        {"role": "user", "content": "你好"},
+        {"role": "assistant", "content": "你好呀！今天有什么想聊的？"}
+      ],
+      "tags": [
+        {"type": "sticker", "label": "表情包: 微笑"}
+      ]
     }
   ],
   "total": 500,
@@ -144,6 +172,8 @@ GET /api/personas/{name}/conversations
 
 - **用户消息**中的标签：`sticker`（动画表情，label 格式如 `动画表情 ×2`）、`image`（普通图片，label 格式如 `图片 ×3`）
 - **模型回复**中的标签：`sticker`（表情包，label 格式如 `表情包: 开心`）、`pin`（钉住消息）、`unpin`（取消钉住）
+
+`conversation_chain` 字段（仅 `assistant` 角色消息拥有）记录了该条回复生成时使用的完整 LLM 调用消息链，格式为一个数组，每个元素包含 `role` 和 `content` 字段，用于调试和追溯。
 
 ## Plugin 管理
 

@@ -241,8 +241,12 @@ Brain 是引擎的 LLM 调用层，支持：
 
 ### AI 回复持久化（执行阶段）
 
-生成回复后，引擎通过 `_hook_memory` 将回复写入 basic_memory，同时将 entry 对象（包含 `system_prompt`、`tags` 字段，字段值仅记录模型输出相关标签，如表情包、钉住指令）追加到 basic_store，用于后续的快速检索和同步。
+生成回复后，引擎通过 `_hook_memory` 将回复写入 basic_memory，同时将 entry 对象（包含 `system_prompt`、`tags`、`conversation_chain` 字段，字段值仅记录模型输出相关标签，如表情包、钉住指令）追加到 basic_store，用于后续的快速检索和同步。
 
-> 注意：用户消息的 entry 包含多模态输入标签（图片、动画表情数量），而 AI 回复的 entry 包含模型输出相关标签（表情包名称、钉住/取消钉住操作）。两部分共同形成完整的对话 tagging。
+- `system_prompt`: 本次 LLM 调用使用的完整 system prompt
+- `tags`: 模型输出相关标签（表情包名称、钉住/取消钉住操作）
+- `conversation_chain`: 完整的 LLM 消息链，包含 system prompt 和用户消息（user/assistant 交替），用于上下文回溯和 prompt 重建
+
+> 注意：用户消息的 entry 包含多模态输入标签（图片、动画表情数量），而 AI 回复的 entry 包含模型输出相关标签（表情包名称、钉住/取消钉住操作）和完整的 LLM 消息链。两部分共同形成完整的对话 tagging。
 
 详见 [记忆系统](./memory-system)。

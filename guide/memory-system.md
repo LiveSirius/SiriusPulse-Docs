@@ -22,6 +22,25 @@ per-group deque:
   [entry_1, entry_2, ..., entry_N]  # N = hard_limit (默认 30)
 ```
 
+### 条目结构
+
+每个 `BasicMemoryEntry` 包含以下字段：
+
+| 字段 | 说明 |
+|------|------|
+| `role` | 角色：`user` / `assistant` |
+| `user_id` | 用户 ID（机器人回复为 `"assistant"`） |
+| `timestamp` | 消息时间戳（浮动秒数） |
+| `content` | 消息文本内容 |
+| `speaker_name` | 显示名（用户昵称或机器人名称） |
+| `channel_type` | 平台类型（如 `qq`） |
+| `channel_user_id` | 平台原始 ID（如 QQ 号） |
+| `multimodal_inputs` | 多模态输入列表（如图片） |
+| `tags` | 内容标签（表情包、钉住等） |
+| `conversation_chain` | **完整 LLM 消息链**（详见下文） |
+
+`conversation_chain` 字段用于记录 AI 回复生成时所使用的完整消息列表，包含 `system` prompt 及后续 `user` / `assistant` 交替消息，便于对话历史页面还原 LLM 调用上下文。
+
 ### 核心参数
 
 | 参数 | 默认值 | 说明 |
@@ -31,7 +50,7 @@ per-group deque:
 
 ### 操作
 
-- `add_entry()`: 添加对话记录到队列尾部，先进先出
+- `add_entry()`: 添加对话记录到队列尾部，先进先出。可传入 `conversation_chain` 参数记录完整消息链。
 - `get_context(n)`: 获取最近 n 条上下文（用于 prompt 构建）
 - `get_archive_candidates()`: 获取超出 context_window 的旧条目（用于日记归档）
 - `get_entries_by_user()`: 跨群查询某用户发言
