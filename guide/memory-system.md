@@ -90,13 +90,13 @@ per-group deque:
 | `DiaryVectorStore` | 日记向量索引（ChromaDB） |
 | `DiaryRetriever` | 语义检索相关日记 |
 | `DiaryConsolidator` | 合并多条日记为更高层的摘要 |
-| `DiarySliceStore` | 日记切片的文件持久化存储（JSON 文件，按群组索引） |
+| `DiarySliceStore` | 日记切片的文件持久化存储（JSON 文件，按群组索引），支持按 ID 批量删除（`delete_by_ids`） |
 | `DiarySliceVectorStore` | 日记切片向量的 ChromaDB 持久化索引 |
 | `DiarySliceRetriever` | 日记切片的三路召回检索：语义（ChromaDB）+ 三元组精确匹配 + 关键词降级 |
 
 ### 日记切片
 
-当日记归档后，系统自动对生成的日记条目进行切片（`DiarySlicer`），生成一系列结构化片段（`DiarySlice`），每片包含摘要、关键词、时间范围、参与实体及嵌入向量。
+当日记归档后，系统自动对生成的日记条目进行切片（`DiarySlicer`），生成一系列结构化片段（`DiarySlice`），每片包含摘要、关键词、时间范围、参与实体、关联情景 ID 及嵌入向量。
 
 - **持久化**：切片通过 `DiarySliceStore` 存储为 JSON 文件，路径为 `{work_path}/diary/slices/{group_id}.json`；同时向量通过 `DiarySliceVectorStore`（基于 ChromaDB）持久化。
 - **三路召回**：`DiarySliceRetriever` 在检索时融合三条路径：
@@ -118,6 +118,24 @@ per-group deque:
 }
 ```
 
+### 日记切片结构（DiarySlice）
+
+`DiarySlice` 包含以下字段（新增 `situation_ids` 用于关联生成该切片的情景记录）：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `slice_id` | `str` | 切片唯一标识 |
+| `summary` | `str` | 切片摘要 |
+| `keywords` | `list[str]` | 关键词 |
+| `triple_subjects` | `list[str]` | 三元组主语列表（用于精确匹配） |
+| `triple_predicates` | `list[str]` | 三元组谓语列表 |
+| `source_record_ids` | `list[str]` | 来源日记记录 ID |
+| `situation_ids` | `list[str]` | 关联的情景 ID 列表（由生成该切片的情景提取而来） |
+| `participants` | `list[str]` | 参与者用户 ID |
+| `time_range_start` | `str` | 时间范围起点 |
+| `time_range_end` | `str` | 时间范围终点 |
+| `embedding` | `list[float]` | 向量嵌入 |
+
 ### ContextAssembler 的日记集成
 
 `ContextAssembler.build_messages()` 在构建 prompt 时会：
@@ -128,7 +146,6 @@ per-group deque:
 
 ## 语义记忆（Semantic Memory）
 
-...
 ...（原语义记忆内容不变）
 
 ## 演化链（Evolution Chain）
@@ -155,6 +172,15 @@ per-group deque:
 | `source_type` | 来源类型：`MetaTag.INFERENCE`（LLM 提取）、`MIGRATION`（数据迁移）、`DIRECT`（直接记录） |
 | `source_group_id` / `source_message_ids` | 来源群组与消息 |
 | `extracted_by_model` | 提取模型标识 |
+
+### 别称管理
+
+演化链承担了别名管理的核心职责，替代了原先 `UnifiedUserManager` 中的 `_alias_index`。系统通过 `EvolutionChain` 的 `register_alias` 和 `resolve_alias` 方法处理所有别名的注册与解析。
+
+- **别称注册**：`register_alias(alias, user_id, user_name, group_id, source)` 创建或增强一条谓语为 `"别名"`（常量 `ALIAS_PREDICATE`）的演化记录。首次注册时，napcat 来源的置信度为 0.50，LLM 发现的置信度为 0.30；后续每次提及都会通过 `add_verification` 增强置信度（+0.05）。
+- **别称解析**：`resolve_alias(alias, group_id, recent_speakers, at_user_id)` 根据缓存（`_alias_cache`）查找匹配的活跃记录，支持消歧策略：@ 锚定 > 最近活跃 > 置信度领先（1.5x 阈值）。返回 `(user_id, confidence, 候选列表)`。
+- **用户别称查询**：`get_user_aliases(user_id)` 从缓存中收集某用户的所有别称。
+- **缓存维护**：`_alias_cache` 为 `dict[str, list[EvolutionRecord]]`，仅包含 `ACTIVE` 状态的别称记录，启动时从持久化存储加载。
 
 ### 学习机制
 
@@ -230,11 +256,14 @@ per-group deque:
 
 ### 别名管理
 
-别名注册沿用四层防御机制（人格身份隔离、LLM 冲突校验、子串冲突校验、标准注册），由 `UnifiedUserManager` 维护全局别名速查表。
+别名管理已从 `UnifiedUserManager` 的 `_alias_index` 迁移至演化链（`EvolutionChain`）。`UnifiedUserManager` 通过其持有的 `_evolution_chain` 实例委托所有别名操作：
 
-- **别名置信度**：首次注册时 napcat 来源 0.50，LLM 发现 0.30，后续随提及次数对数增长
-- **时间衰减**：每过去一天置信度衰减 5%，低于 0.10 自动删除
-- 别名数据通过 `get_aliases_for_group(group_id)` 接口暴露给认知分析器。同时还新增了 `get_alias_to_user_id_for_group(group_id)` 方法，返回别名到 user_id 的映射，用于情景提取等场景
+- **注册**：`register_alias()` 内部调用 `evolution_chain.register_alias()`，创建或增强别称演化记录（谓语为 `"别名"`）。
+- **解析**：`resolve_alias()` 内部调用 `evolution_chain.resolve_alias()`，利用别称缓存进行消歧。
+- **查询**：`get_user_aliases()` 从演化链缓存中收集某用户的所有别称。
+- **别名置信度**：napcat 来源初始 0.50，LLM 发现初始 0.30，后续每提及一次增强 0.05。
+- **时间衰减**：演化链通用置信度衰减机制（每日 5%）同样作用于别称记录，低于 0.10 自动标记为 `SUPERSEDED`。
+- 别称数据通过 `evolution_chain.get_user_aliases(user_id)` 和 `evolution_chain._alias_cache` 暴露给认知分析器。
 
 ### 亲和力反馈回路
 

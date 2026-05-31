@@ -17,6 +17,7 @@ engine._helpers            # Helpers: 技能集成、工具方法
 engine._persistence        # EnginePersistence: 状态持久化
 engine._sticker            # EngineSticker: 表情包系统
 engine._pinned_manager     # PinnedMessageManager: 消息钉住系统
+engine._evolution_chain    # EvolutionChain: 演化链（含别称管理）
 engine._identity_resolver  # IdentityResolver: 身份解析（含别名/模糊匹配）
 engine._biography_view     # BiographyView: 传记视图，实时计算用户传记
 engine._bot_platform_uids  # dict[str,str]: Bot 在各平台的 UID
@@ -109,7 +110,7 @@ flowchart TB
 |------|------|--------|------|
 | L1 | platform_id 精确匹配 | 1.0 | 通过平台用户 ID 直接匹配已注册用户 |
 | L1.5 | Bot 自身检测 | 1.0 | 检测消息是否来自 Bot 自身账号（基于 `_bot_platform_uids`） |
-| L2 | alias_index 精确匹配 | 0.9 | 通过传记系统中的别名索引精确匹配 |
+| L2 | evolution_chain 别称缓存精确匹配 | 0.9 | 通过演化链的别称缓存精确匹配 |
 | L3 | 模糊匹配 | 0.7~0.9 | 基于模糊字符串匹配（如相似度>0.85） |
 | L4 | 上下文推断 | 0.6 | 根据最近发言者列表推断身份 |
 
@@ -211,7 +212,7 @@ Brain 是引擎的 LLM 调用层，支持：
 |------|------|------|
 | 延迟响应轮询 | 1s | 释放到期延迟回复 |
 | 主动行为评估 | 可变 | 评估是否需要主动发起对话 |
-| 日记促进与精炼 | 可变 | 群聊沉寂后归档对话，结合冷检测、情景提取和演化链精炼；传递 storage 实例加载群组别名映射，提升情景提取准确性；从候选消息中过滤已生成日记或已提取情景的消息；在COLD状态下优先使用未处理的情景生成日记，支持情景补提；生成的切片会持久化到文件并索引到 ChromaDB 向量库，成功后标记情景为已处理 |
+| 日记促进与精炼 | 可变 | 群聊沉寂后归档对话，结合冷检测、情景提取和演化链精炼；传递 storage 实例加载群组别名映射，提升情景提取准确性；从候选消息中过滤已生成日记或已提取情景的消息；切片会记录关联的情景ID（situation_ids）；在COLD状态下优先使用未处理的情景生成日记，支持情景补提；生成的切片会持久化到文件并索引到 ChromaDB 向量库，成功后标记情景为已处理 |
 | 后台精炼 | 可变 | 对已完成的日记切片进行二次精炼，提取情景和演化事实；传递 storage 实例以利用别名映射 |
 | 记忆维护 | 可变 | 语义记忆整理和衰减 |
 | 状态持久化 | 300s | 全量保存运行时状态 |
