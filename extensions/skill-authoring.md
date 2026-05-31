@@ -17,7 +17,6 @@ from sirius_pulse.skills.api import (
     SkillPassiveType,         # 被动技能类型枚举
     SkillParameter,           # 技能参数定义
     SkillDataStore,           # 持久化 KV 存储
-    strip_skill_calls,        # 移除 SKILL_CALL 标记
     ensure_developer_access,  # 开发者权限检查
 )
 ```
