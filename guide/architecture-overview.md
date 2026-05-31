@@ -293,7 +293,7 @@ sequenceDiagram
 
 ### 5.1 引擎后台任务
 
-引擎内置 6 个后台任务，另有被动 SKILL 注册的任务（如 reminder）并行运行：
+引擎内置 7 个后台任务，另有被动 SKILL 注册的任务（如 reminder）并行运行：
 
 ```mermaid
 flowchart LR
@@ -304,10 +304,11 @@ flowchart LR
         T4["任务4<br/>日记 consolidator<br/>每 600 秒"]
         T5["任务5<br/>开发者私聊 checker<br/>每 60 秒"]
         T6["任务6<br/>表情包新鲜度更新<br/>每 3600 秒"]
+        T7["任务7<br/>背景精炼器<br/>每 600 秒"]
     end
 
     subgraph PassiveSK["被动 SKILL 任务"]
-        T7["reminder checker<br/>每 15 秒<br/>通过 create_background_tasks() 注册"]
+        T8["reminder checker<br/>每 15 秒<br/>通过 create_background_tasks() 注册"]
     end
 
     T1 -->|"检测话题间隙<br/>触发延迟回复"| Engine["EmotionalGroupChatEngine"]
@@ -316,7 +317,8 @@ flowchart LR
     T4 -->|"合并相似日记"| Engine
     T5 -->|"检查开发者私聊"| Engine
     T6 -->|"衰减 novelty_score<br/>模拟喜新厌旧"| Engine
-    T7 -->|"扫描到期提醒<br/>支持 once/interval/daily/weekly"| Engine
+    T7 -->|"冷群记忆演化<br/>触发情景提取与传记更新"| Engine
+    T8 -->|"扫描到期提醒<br/>支持 once/interval/daily/weekly"| Engine
 ```
 
 ### 5.2 提醒系统完整链路
