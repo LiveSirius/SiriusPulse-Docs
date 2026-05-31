@@ -75,11 +75,11 @@ per-group deque:
 
 后台任务 `_background_refiner` 会根据冷状态分层处理：
 - `COOLING` → 情景提取（Situation Extraction）：对近期对话进行结构化摘要
-- `COLD` → 日记归档 + 演化链提取：将旧消息归档为日记，同时通过 LLM 提取三元组存入演化链
+- `COLD` → 优先从 `situation_store` 获取未处理的已提取情景（Situation），若有则基于这些情景生成日记并切分为切片，之后标记情景为已处理；若无情景则尝试从 basic_memory 的候选消息中补提情景（补提后再次获取情景），补提仍无结果时回退到旧逻辑：将旧消息归档为日记，同时通过 LLM 提取三元组存入演化链。
 
 ## 日记系统（Diary）
 
-当群聊进入 `COLD` 状态时，系统将 basic_memory 中超出窗口的旧消息归档为结构化日记。冷状态由 `ColdDetector` 根据热度与沉寂时长综合判定。
+当群聊进入 `COLD` 状态时，系统优先使用该群已经提取的情景（Situation）来生成结构化日记。若没有已提取的情景，则尝试从 basic_memory 中超出窗口的旧消息中补提情景，补提成功后生成日记。若仍无法获取情景，则直接归档旧消息为日记。冷状态由 `ColdDetector` 根据热度与沉寂时长综合判定。
 
 ### 组件
 
@@ -158,7 +158,7 @@ per-group deque:
 
 ### 学习机制
 
-- **情景提取（Situation Extraction）**：在群聊暂冷时，`SituationExtractor` 对近期对话进行结构化提取，生成三元组存入演化链
+- **情景提取（Situation Extraction）**：在群聊暂冷（`COOLING`）时，`SituationExtractor` 对近期对话进行结构化提取，生成三元组存入演化链；当群聊深冷（`COLD`）且无已提取情景时，也会尝试补提情景
 - **日记知识抽取**：日记归档时，LLM 提取长期观点、关系等事实写入演化链
 - **数据迁移**：旧版 `UnifiedUser` 的 `distilled_points`、`identity_anchors`、`relationships` 通过 `migrate_to_evolution.py` 脚本批量迁移至演化链，标记为 `MetaTag.MIGRATION`，置信度设为 0.5
 
