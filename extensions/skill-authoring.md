@@ -61,7 +61,7 @@ def run(greeting: str = "你好", name: str = "大家", **kwargs) -> dict:
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| `name` | str | ✅ | 技能唯一名称，用于 SKILL_CALL 匹配 |
+| `name` | str | ✅ | 技能唯一名称，用于 function_call (tools) 机制匹配 |
 | `description` | str | ✅ | 功能描述，会被注入 LLM prompt 中供 AI 理解 |
 | `version` | str | ✅ | 语义版本号 |
 | `parameters` | dict | ❌ | 参数定义：`{"参数名": "参数描述"}` |

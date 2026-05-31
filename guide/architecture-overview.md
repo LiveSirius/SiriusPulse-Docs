@@ -194,7 +194,7 @@ flowchart TD
         X6 --> X7["StyleAdapter 输出长度/语气指令"]
         X7 --> X8["ModelRouter 选择模型"]
         X8 --> X9["Brain.chat()<br/>→ 获取串行锁<br/>→ 构建 gen_request<br/>→ _call_with_retry(rebuild_fn)<br/>→ Provider.generate_async()"]
-        X9 --> X10["解析 SKILL_CALL"]
+        X9 --> X10["解析 function_call (tools)"]
         X10 --> X11["Token 追踪记录"]
         X11 --> X12["emit EXECUTION_COMPLETED"]
     end
@@ -335,7 +335,7 @@ sequenceDiagram
     participant QQ as QQ 群
 
     User->>AI: "提醒我明天下午 3 点开会"
-    AI->>AI: 生成回复含 [SKILL_CALL: reminder]
+    AI->>AI: 生成回复含 function_call (reminder)
     AI->>Skill: 执行 reminder.run()
     Skill->>Store: 存入 skill_data/reminder.json
     Note over Engine: 引擎自动注入 group_id 和 adapter_type
