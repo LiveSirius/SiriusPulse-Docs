@@ -1,33 +1,33 @@
 # Biography API
 
-## Overview
+## 概述
 
-Biography API provides endpoints to view, refresh, and manage user biographies. Biographies are generated from memory evolution records, diary slices, and semantic profiles. The API is built on FastAPI and is part of the Sirius Pulse WebUI.
+Biography API 提供查看、刷新和管理用户传记的端点。传记由记忆演化链、日记切片和语义画像自动生成。该 API 基于 FastAPI 构建，是 Sirius Pulse WebUI 的组成部分。
 
-## Authentication
+## 认证
 
-All endpoints require a valid API key passed via the `X-API-Key` header, or session-based authentication (JWT). Refer to the main WebUI documentation for setup.
+所有端点都需要通过 `X-API-Key` 请求头传递有效的 API 密钥，或使用基于会话的认证（JWT）。具体配置请参考 WebUI 主文档。
 
-## Endpoints
+## 端点
 
-### 1. Get Biography (Default)
+### 1. 获取传记（默认）
 
 **`GET /api/biography/{user_id}`**
 
-Returns the main biography text for the specified user.
+返回指定用户的主要传记文本。
 
-**Parameters**
+**参数**
 
-| Name | Type | In | Required | Description |
-|------|------|----|----------|-------------|
-| `user_id` | string | path | yes | User ID (UUID) or username |
-| `format` | string | query | no | Output format: `text` (default) or `json` |
+| 名称 | 类型 | 位置 | 必填 | 说明 |
+|------|------|------|------|------|
+| `user_id` | string | path | 是 | 用户 ID（UUID）或用户名 |
+| `format` | string | query | 否 | 输出格式：`text`（默认）或 `json` |
 
-**Response (format=text)**
+**响应（format=text）**
 - Content-Type: `text/plain`
-- Body: Plain text biography.
+- Body: 纯文本传记
 
-**Response (format=json)**
+**响应（format=json）**
 ```json
 {
   "user_id": "string",
@@ -40,20 +40,20 @@ Returns the main biography text for the specified user.
 
 ---
 
-### 2. Get Full Biography
+### 2. 获取完整传记
 
 **`GET /api/biography/{user_id}/full`**
 
-Returns detailed biography including all underlying evolution records, diary references, and semantic profiles.
+返回详细传记，包括所有底层演化记录、日记引用和语义画像。
 
-**Parameters**
+**参数**
 
-| Name | Type | In | Required | Description |
-|------|------|----|----------|-------------|
-| `user_id` | string | path | yes | User ID (UUID) or username |
-| `include_raw` | boolean | query | no | Include raw evolution records (default: `false`) |
+| 名称 | 类型 | 位置 | 必填 | 说明 |
+|------|------|------|------|------|
+| `user_id` | string | path | 是 | 用户 ID（UUID）或用户名 |
+| `include_raw` | boolean | query | 否 | 是否包含原始演化记录（默认：`false`） |
 
-**Response**
+**响应**
 ```json
 {
   "user_id": "string",
@@ -87,19 +87,19 @@ Returns detailed biography including all underlying evolution records, diary ref
 
 ---
 
-### 3. Refresh Biography
+### 3. 刷新传记
 
 **`POST /api/biography/{user_id}/refresh`**
 
-Forces an immediate regeneration of the biography from underlying memory sources. This is an asynchronous operation; returns immediately with a task ID.
+强制从底层记忆源重新生成传记。这是一个异步操作，会立即返回任务 ID。
 
-**Parameters**
+**参数**
 
-| Name | Type | In | Required | Description |
-|------|------|----|----------|-------------|
-| `user_id` | string | path | yes | User ID (UUID) or username |
+| 名称 | 类型 | 位置 | 必填 | 说明 |
+|------|------|------|------|------|
+| `user_id` | string | path | 是 | 用户 ID（UUID）或用户名 |
 
-**Response**
+**响应**
 ```json
 {
   "task_id": "uuid",
@@ -108,17 +108,17 @@ Forces an immediate regeneration of the biography from underlying memory sources
 }
 ```
 
-To check task status: `GET /api/tasks/{task_id}`
+查询任务状态：`GET /api/tasks/{task_id}`
 
 ---
 
-### 4. List Biography Users
+### 4. 列出传记用户
 
 **`GET /api/biography/users`**
 
-Returns a list of users that have biographies available.
+返回已有传记的用户列表。
 
-**Response**
+**响应**
 ```json
 {
   "users": [
@@ -131,24 +131,24 @@ Returns a list of users that have biographies available.
 }
 ```
 
-## Error Codes
+## 错误码
 
-| HTTP Status | Meaning |
-|-------------|---------|
-| 200 | Success |
-| 400 | Invalid user_id or parameters |
-| 401 | Authentication failure |
-| 404 | User not found |
-| 500 | Internal server error (e.g., generation failure) |
+| HTTP 状态码 | 说明 |
+|-------------|------|
+| 200 | 成功 |
+| 400 | 无效的 user_id 或参数 |
+| 401 | 认证失败 |
+| 404 | 用户未找到 |
+| 500 | 服务器内部错误（如生成失败） |
 
-## Notes
+## 说明
 
-- Biographies are dynamically generated from the evolution chain, diary archive, and semantic memory. The default biography text is a condensation of the user’s most important facts.
-- The `/full` endpoint is intended for debugging and data inspection; it may return large payloads.
-- Refreshing a biography does not delete the existing one; it creates a new version. Previous versions can be accessed via history endpoints (see versioning documentation).
+- 传记由演化链、日记归档和语义记忆动态生成。默认传记文本是用户最重要信息的浓缩。
+- `/full` 端点用于调试和数据检查，可能返回较大的响应体。
+- 刷新传记不会删除现有传记，而是创建新版本。历史版本可通过历史端点访问（参见版本管理文档）。
 
-## Related Documents
+## 相关文档
 
-- [Evolution Chain API](./evolution-api.md)
-- [Memory Dashboard API](./memory-api.md)
-- [Diary API](./diary-api.md)
+- [演化链 API](./evolution-api.md)
+- [WebUI API](./webui-api.md)
+- [日记切片存储](./diary-slice-storage.md)

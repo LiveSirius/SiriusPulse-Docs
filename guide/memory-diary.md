@@ -221,7 +221,7 @@ for s in slices:
 
 ## 相关文档
 
-- [记忆系统概览](./memory.md)
-- [冷检测模块](./cold_detector.md)
-- [背景任务](./bg_tasks.md)
-- [WebUI 集成](./webui/memory_api.md)
+- [记忆系统概览](./memory-system.md)
+- [记忆系统模块](../modules/memory-system.md)
+- [核心引擎模块](../modules/core-engine.md)
+- [WebUI API](../reference/webui-api.md)
