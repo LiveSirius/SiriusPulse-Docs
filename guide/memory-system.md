@@ -175,12 +175,17 @@ per-group deque:
 
 ### 别称管理
 
-演化链承担了别名管理的核心职责，替代了原先 `UnifiedUserManager` 中的 `_alias_index`。系统通过 `EvolutionChain` 的 `register_alias` 和 `resolve_alias` 方法处理所有别名的注册与解析。
+别称管理分为运行时解析和后台管理两个层面。
+
+**运行时别名解析**：演化链承担了别名管理的核心职责，替代了原先 `UnifiedUserManager` 中的 `_alias_index`。系统通过 `EvolutionChain` 的 `register_alias` 和 `resolve_alias` 方法处理所有别名的注册与解析。
 
 - **别称注册**：`register_alias(alias, user_id, user_name, group_id, source)` 创建或增强一条谓语为 `"别名"`（常量 `ALIAS_PREDICATE`）的演化记录。首次注册时，napcat 来源的置信度为 0.50，LLM 发现的置信度为 0.30；后续每次提及都会通过 `add_verification` 增强置信度（+0.05）。
 - **别称解析**：`resolve_alias(alias, group_id, recent_speakers, at_user_id)` 根据缓存（`_alias_cache`）查找匹配的活跃记录，支持消歧策略：@ 锚定 > 最近活跃 > 置信度领先（1.5x 阈值）。返回 `(user_id, confidence, 候选列表)`。
 - **用户别称查询**：`get_user_aliases(user_id)` 从缓存中收集某用户的所有别称。
 - **缓存维护**：`_alias_cache` 为 `dict[str, list[EvolutionRecord]]`，仅包含 `ACTIVE` 状态的别称记录，启动时从持久化存储加载。
+- **Shadow 状态**：`EvolutionChain.shadow_alias(alias, user_id)` 可将指定别称记录标记为 `SHADOW` 状态，使其不参与召回但保留可追溯性。该操作通常由 Web UI 发起。
+
+**后台管理（Web UI）**：Web UI 的别名管理 API 直接操作 `MemoryStorage` 中的 `aliases` 表（该表含 `status` 字段，默认 `'active'`），而非通过演化链。支持添加、删除、Shadow 操作。运行时的别名解析仍通过演化链进行，两者数据独立。
 
 ### 学习机制
 
@@ -256,14 +261,17 @@ per-group deque:
 
 ### 别名管理
 
-别名管理已从 `UnifiedUserManager` 的 `_alias_index` 迁移至演化链（`EvolutionChain`）。`UnifiedUserManager` 通过其持有的 `_evolution_chain` 实例委托所有别名操作：
+运行时别名管理已从 `UnifiedUserManager` 的 `_alias_index` 迁移至演化链（`EvolutionChain`）。`UnifiedUserManager` 通过其持有的 `_evolution_chain` 实例委托所有别名操作：
 
 - **注册**：`register_alias()` 内部调用 `evolution_chain.register_alias()`，创建或增强别称演化记录（谓语为 `"别名"`）。
 - **解析**：`resolve_alias()` 内部调用 `evolution_chain.resolve_alias()`，利用别称缓存进行消歧。
 - **查询**：`get_user_aliases()` 从演化链缓存中收集某用户的所有别称。
 - **别名置信度**：napcat 来源初始 0.50，LLM 发现初始 0.30，后续每提及一次增强 0.05。
 - **时间衰减**：演化链通用置信度衰减机制（每日 5%）同样作用于别称记录，低于 0.10 自动标记为 `SUPERSEDED`。
+- **Shadow 状态**：`EvolutionChain.shadow_alias()` 可将记录标记为 SHADOW，不参与召回。
 - 别称数据通过 `evolution_chain.get_user_aliases(user_id)` 和 `evolution_chain._alias_cache` 暴露给认知分析器。
+
+**Web UI 后台别名管理**：Web UI 的别名管理 API 直接操作 `MemoryStorage` 中的 `aliases` 表（含 `status` 字段），与运行时的演化链数据独立。
 
 ### 亲和力反馈回路
 
@@ -333,6 +341,16 @@ AI 在回复中使用特殊语法来钉住或取消钉住消息：
 ### 携带计数与自动过期
 
 每条钉住消息记录 `carry_count`，每次被用于 prompt 注入时加 1。当 `carry_count` 超过 `MAX_CARRY_COUNT` 时，消息自动取消钉住。同时，超过 `MAX_AGE_HOURS` 的消息也会被清理。
+
+## 系统提示注入
+
+系统提示中注入多个结构化段落，引导 LLM 的行为。除上述钉住消息、人物速查、日记等内容外，还包含以下固定段落：
+
+### 记忆规范
+
+`【记忆规范】` 段落强制注入于人格提示之后，包含两条核心规范：
+1. **不凭空捏造事实**：LLM 不得编造未在上下文中出现的关于他人的事实。
+2. **推测需带可能性表述**：基于上下文推断事件时，应使用“可能”、“或许”等措辞。
 
 ## 配置调优
 
