@@ -184,7 +184,7 @@ per-group deque:
 
 ### 学习机制
 
-- **情景提取（Situation Extraction）**：在群聊暂冷（`COOLING`）时，`SituationExtractor` 对近期对话进行结构化提取，生成三元组存入演化链；当群聊深冷（`COLD`）且无已提取情景时，也会尝试补提情景。`extract` 方法新增 `storage` 参数，用于获取群组的别名映射，提升实体识别的准确率
+- **情景提取（Situation Extraction）**：在群聊暂冷（`COOLING`）时，`SituationExtractor` 对近期对话进行结构化提取，生成三元组存入演化链；当群聊深冷（`COLD`）且无已提取情景时，也会尝试补提情景。`extract` 方法新增 `storage` 和 `user_manager` 参数，`storage` 用于获取群组的别名映射，`user_manager` 用于获取用户信息，提升实体识别的准确率
 - **日记知识抽取**：日记归档时，LLM 提取长期观点、关系等事实写入演化链
 - **数据迁移**：旧版 `UnifiedUser` 的 `distilled_points`、`identity_anchors`、`relationships` 通过 `migrate_to_evolution.py` 脚本批量迁移至演化链，标记为 `MetaTag.MIGRATION`，置信度设为 0.5
 

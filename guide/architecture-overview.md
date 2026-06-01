@@ -142,6 +142,7 @@ flowchart TD
 - 每个 bridge 有自己的 `allowed_group_ids` 配置
 - engine 的 `_pending_reminders` 是共享的（所有 bridge 都能投递提醒）
 - Brain 是单例的，`chat()` 串行执行，`raw_call()` 可与 chat 并行
+- **Brain system prompt 变更**：v1.3 起，Brain 的默认 pre‑hook 不再自动拼接 `memory_spec` 部分。构建系统提示时，将由 `PromptFactory.assemble_chat()` 等上层调用负责组装客户化记忆相关指令。如需自定义记忆策略，请通过 `build_system_prompt()` 或在配置中调整。
 - **IdentityResolver 增强解析**：`IdentityResolver` 新增 `resolve_with_alias()` 方法，支持四层解析链（精确平台ID→Bot自识别→别名精确→模糊匹配），返回值含置信度和来源，用于开发者判断和用户解析。
 - 引擎支持配置文件热重载，通过写入 `engine_state/reload_requested` 标志文件触发，支持类型：`persona`、`orchestration`、`experience`、`provider`、`all`。其中 `provider` 类型会重新构建 Provider 实例，使 provider 配置变更无需重启引擎。
 
@@ -210,7 +211,9 @@ flowchart TD
 >
 > **标签记录（AI 回复）**：AI 回复中的表情包和钉住/取消钉住指令也会以 `tags` 形式记录，例如 `{ "type": "sticker", "label": "表情包: 猫猫.jpg, 狗狗.jpg" }` 或 `{ "type": "pin", "label": "钉住 ×1" }`。
 >
-> **完整 LLM 消息链记录**：每次 AI 回复生成后（包括立即回复和延迟回复），引擎会将本次对话的完整 LLM 消息链（包含 system prompt 和所有用户/助手交替消息）作为 `conversation_chain` 字段保存到 `BasicMemoryEntry` 中。这为后续检索、调试和上下文重建提供了精确的输入记录，提升了记忆回溯的准确性。
+> ~~**完整 LLM 消息链记录**：每次 AI 回复生成后（包括立即回复和延迟回复），引擎会将本次对话的完整 LLM 消息链（包含 system prompt 和所有用户/助手交替消息）作为 `conversation_chain` 字段保存到 `BasicMemoryEntry` 中。这为后续检索、调试和上下文重建提供了精确的输入记录，提升了记忆回溯的准确性。~~
+>
+> **v1.3 变更**：该功能已移除。自动记忆记录和回复时间戳追踪（`_last_reply_at`）不再通过 Brain post‑hooks 执行。延迟回复的记忆写入与去重逻辑已统一由 Brain post‑hooks 处理（见 `_hook_stickers`、`_hook_dedup`、`_hook_pin_messages` 等），因此不再单独保存完整 LLM 消息链。如需保留上下文记录，建议通过 `BasicMemoryManager.add_entry()` 手动写入。
 
 > **插件命令快速拦截**：引擎新增插件命令拦截机制。在感知层完成消息记录后、认知层进行 LLM 或规则分析之前，引擎会检查消息内容是否匹配已注册的插件命令（如 `/ca analyse`）。若匹配，则直接执行插件逻辑并返回结果，避免了 LLM 对命令模式的错误理解。此步骤完全基于规则，零 LLM 成本，确保插件命令的及时响应。
 
@@ -283,6 +286,8 @@ sequenceDiagram
 ```
 
 > **搜索内容优化**：延迟回复在构建上下文时，`search_query` 使用去除 XML 标签的原始聊天内容，避免标签干扰日记检索的准确性。
+>
+> **v1.3 Hook 统一处理**：延迟回复的最终回复处理（表情包解析、去重、记忆记录、时间戳更新）已全部移入 `Brain` 的 post‑hooks，不再由 `DelayedQueueTasks` 内部手动管理。因此 `delayed_response_queue` 中的 `sticker_names`、`clean_text` 等字段直接依赖 `ChatResult` 中 hook 处理后的结果。
 
 ### 4.4 四种响应策略的触发条件
 
