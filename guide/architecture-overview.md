@@ -112,6 +112,7 @@ flowchart TD
 - 提供静态页面：Dashboard + 配置面板 + 监控页面
 - 不直接操作 NapCat 进程，只通过 API 与 PersonaManager 交互
 - 保存 Provider 配置后自动通知所有运行中的人格外进程热重载 provider 配置；WebUI 的存储相关 API 以只读模式打开数据库，避免与引擎写操作产生锁冲突
+- 提供用户别名管理 API（添加、删除、shadow 标记），别名数据直接持久化在 `memory.db` 的 `aliases` 表，管理操作不再依赖演化链中间缓存。
 
 **NapCatManager（QQ 管理器）**
 - 管理 NapCat 全局二进制（安装、更新）
@@ -142,6 +143,7 @@ flowchart TD
 - 每个 bridge 有自己的 `allowed_group_ids` 配置
 - engine 的 `_pending_reminders` 是共享的（所有 bridge 都能投递提醒）
 - Brain 是单例的，`chat()` 串行执行，`raw_call()` 可与 chat 并行
+- **记忆规范注入**：每次构建系统 prompt 时，`Brain` 会在人格底色后自动插入 `【记忆规范】` 段落，约束 LLM 不要凭空捏造他人事实，并允许基于上下文进行带不确定性的推断。
 - **IdentityResolver 增强解析**：`IdentityResolver` 新增 `resolve_with_alias()` 方法，支持四层解析链（精确平台ID→Bot自识别→别名精确→模糊匹配），返回值含置信度和来源，用于开发者判断和用户解析。
 - 引擎支持配置文件热重载，通过写入 `engine_state/reload_requested` 标志文件触发，支持类型：`persona`、`orchestration`、`experience`、`provider`、`all`。其中 `provider` 类型会重新构建 Provider 实例，使 provider 配置变更无需重启引擎。
 
