@@ -170,15 +170,19 @@ AI 在回复内容中可以通过特定语法控制钉住行为：
 
 引擎在 Post-Hook 链的优先级 15 处解析这些指令并执行对应操作。
 
+### 当前消息标记
+
+在 prompt 中，用户当前发送的消息使用 `<message>` 标签渲染，并包含 `index="1"` 属性，表示该消息是当前轮次的最新消息，便于模型区分历史消息与当前输入。
+
 ### 与 Brain 的集成
 
-在每次生成回复（包括主动行为）时，引擎会通过 `get_pinned_messages_for_prompt()` 获取当前群组的钉住消息列表，并注入到 prompt factory 的 `pinned_messages` 参数中。每次调用会增加钉住消息的携带计数，超过阈值时自动取消钉住。
+在每次生成回复（包括主动行为）时，引擎会通过 `get_pinned_messages_for_prompt()` 获取当前群组的钉住消息列表，并注入到 prompt factory 的 `pinned_messages` 参数中。每个钉住消息在 prompt 中渲染为 `<pinned_message>` 标签，包含 `speaker`、`user_id`、`time`、`reason` 属性，以及可选的 `index`（对话索引）和 `msg_id`（平台消息 ID）属性，用于支持引用回复和 prompt 复用。每次调用会增加钉住消息的携带计数，超过阈值时自动取消钉住。
 
 ### 引擎 API
 
 引擎通过 `self._pinned_manager` 暴露以下接口：
 
-- `pin_message(content, speaker, group_id, reason, ...)` — 钉住一条消息
+- `pin_message(content, speaker, group_id, reason, ...)` — 钉住一条消息，`metadata` 可包含 `user_id`、`conversation_index`（对话索引，用于 prompt 复用）、`platform_message_id`（平台消息 ID，用于引用回复）
 - `unpin_message(message_id)` — 按 ID 取消
 - `unpin_by_reason(reason)` — 按原因取消
 - `unpin_all(group_id)` — 取消群组所有钉住

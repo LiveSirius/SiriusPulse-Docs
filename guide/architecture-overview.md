@@ -156,7 +156,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A["QQ 群消息<br/>'今天工作好累'"] --> B["NapCatAdapter<br/>OneBot v11 事件"]
-    B --> C["NapCatAdapter.on_message()<br/>解析事件 → 提取内容/发送者/群号"]
+    B --> C["NapCatAdapter.on_message()<br/>解析事件 → 提取内容/发送者/群号<br/>解析引用消息段 (reply)"]
     C --> D["EngineRuntime.process_message()"]
     D --> E["EmotionalGroupChatEngine.process_message()"]
 
@@ -213,6 +213,8 @@ flowchart TD
 > **完整 LLM 消息链记录**：每次 AI 回复生成后（包括立即回复和延迟回复），引擎会将本次对话的完整 LLM 消息链（包含 system prompt 和所有用户/助手交替消息）作为 `conversation_chain` 字段保存到 `BasicMemoryEntry` 中。这为后续检索、调试和上下文重建提供了精确的输入记录，提升了记忆回溯的准确性。
 
 > **插件命令快速拦截**：引擎新增插件命令拦截机制。在感知层完成消息记录后、认知层进行 LLM 或规则分析之前，引擎会检查消息内容是否匹配已注册的插件命令（如 `/ca analyse`）。若匹配，则直接执行插件逻辑并返回结果，避免了 LLM 对命令模式的错误理解。此步骤完全基于规则，零 LLM 成本，确保插件命令的及时响应。
+>
+> **引用消息解析**：NapCatAdapter 在解析消息段时，新增引用消息（reply 类型）的处理。当检测到回复段时，Adapter 会通过 NapCat API `get_msg` 获取被引用消息的内容和发送者信息，并将其格式化为 `[引用消息 msg_id="xxx" speaker="张三"] 内容 [/引用消息]` 注入到 prompt 中。这确保了 AI 在生成回复时能理解回复的上下文。此步骤完全基于规则，零 LLM 成本。
 
 ### 4.2 认知层内部细节
 
