@@ -54,6 +54,7 @@ per-group deque:
 - `get_context(n)`: 获取最近 n 条上下文（用于 prompt 构建）
 - `get_archive_candidates()`: 获取超出 context_window 的旧条目（用于日记归档）
 - `get_entries_by_user()`: 跨群查询某用户发言
+- **动画表情缓存优化**：当收到纯动画表情消息（`sub_type` 为 1 的图片）且缓存命中时，系统直接使用缓存的描述更新条目内容，将原有内容替换为 `【动画表情：<caption>】`，同时更新多模态输入中的 `caption` 字段。之后返回静默策略，跳过认知阶段，避免不必要的 LLM 调用。
 
 ### 热度计算
 
