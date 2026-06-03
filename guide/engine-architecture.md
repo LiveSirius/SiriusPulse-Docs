@@ -203,14 +203,14 @@ Brain 是引擎的 LLM 调用层，支持：
 | 0 | `_hook_depth` | 对话深度追踪 |
 | 15 | `_hook_pin_messages` | 钉住/取消钉住指令解析 |
 | 20 | `_hook_stickers` | 表情包发送 |
-| 10 | `_hook_reply_reference` | 模型输出中 `[REPLY:xxx]` 引用回复指令解析，构建引用标记供适配器层使用（从 basic_memory 获取最近非 assistant 消息建立索引映射） |
+| 10 | `_hook_reply_reference` | 模型输出中 `[REPLY:xxx]` 引用回复指令解析，将引用信息存储到 `ChatResult.reply_references` 供适配器层使用（从 basic_memory 获取最近非 assistant 消息建立索引映射） |
 | 15 | `_hook_pin_messages` | 钉住/取消钉住指令解析。当 index=0 且未指定内容时，从最后一次 user 消息中提取真实内容（使用 `PromptFactory._extract_last_message_text`），同时提取说话者（`_extract_last_message_speaker`）；若 index 引用历史消息，使用 basic_memory 中的用户条目（过滤 assistant）构建映射 |
 | 20 | `_hook_stickers` | 表情包发送（使用 `_pick_sticker_choice` 从模型选择列表中随机选一个并匹配实际文件） |
 | 30 | `_hook_dedup` | 回复去重（仅聊天回复，主动行为不触发） |
 | 40 | `_hook_memory` | 记忆记录（basic + semantic），写入模型输出相关标签 |
 | 50 | `_hook_timestamp` | 回复时间戳 + 持久化 |
 
-> 回复生成的 `ChatResult` 对象包含 `system_prompt` 字段，存储本次对话使用的完整 system prompt，后续会被写入 basic_store 的 entry 中。
+> 回复生成的 `ChatResult` 对象包含 `system_prompt` 字段（存储本次对话使用的完整 system prompt）和 `reply_references` 字段（存储引用回复信息，由 `_hook_reply_reference` 填充），这些字段后续会被写入 basic_store 的 entry 中。
 
 ## 后台任务
 
