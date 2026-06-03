@@ -307,7 +307,7 @@ sequenceDiagram
 
 ### 5.1 引擎后台任务
 
-引擎内置 7 个后台任务，另有被动 SKILL 注册的任务（如 reminder）并行运行：
+引擎内置 8 个后台任务，另有被动 SKILL 注册的任务（如 reminder）并行运行：
 
 ```mermaid
 flowchart LR
@@ -319,6 +319,7 @@ flowchart LR
         T5["任务5<br/>开发者私聊 checker<br/>每 60 秒"]
         T6["任务6<br/>表情包新鲜度更新<br/>每 3600 秒"]
         T7["任务7<br/>背景精炼器<br/>每 600 秒"]
+    T8["任务8<br/>表情包缓存预热<br/>启动时一次性执行（如无缓存则通过 LLM 生成二元对立关系）"]
     end
 
     subgraph PassiveSK["被动 SKILL 任务"]

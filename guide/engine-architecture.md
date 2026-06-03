@@ -16,6 +16,7 @@ engine._pipeline           # Pipeline: 5 阶段管线
 engine._helpers            # Helpers: 技能集成、工具方法
 engine._persistence        # EnginePersistence: 状态持久化
 engine._sticker            # EngineSticker: 表情包系统
+engine._sticker_oppositions # dict[str, list[str]]: 表情包二元对立缓存（如 {"开心": ["难过", "伤心"]}）
 engine._pinned_manager     # PinnedMessageManager: 消息钉住系统
 engine._evolution_chain    # EvolutionChain: 演化链（含别称管理）
 engine._identity_resolver  # IdentityResolver: 身份解析（含别名/模糊匹配）
@@ -202,9 +203,9 @@ Brain 是引擎的 LLM 调用层，支持：
 | 0 | `_hook_depth` | 对话深度追踪 |
 | 15 | `_hook_pin_messages` | 钉住/取消钉住指令解析 |
 | 20 | `_hook_stickers` | 表情包发送 |
-| 10 | `_hook_reply_reference` | 模型输出中 `[REPLY:xxx]` 引用回复指令解析，构建引用标记供适配器层使用 |
-| 15 | `_hook_pin_messages` | 钉住/取消钉住指令解析 |
-| 20 | `_hook_stickers` | 表情包发送 |
+| 10 | `_hook_reply_reference` | 模型输出中 `[REPLY:xxx]` 引用回复指令解析，构建引用标记供适配器层使用（从 basic_memory 获取最近非 assistant 消息建立索引映射） |
+| 15 | `_hook_pin_messages` | 钉住/取消钉住指令解析。当 index=0 且未指定内容时，从最后一次 user 消息中提取真实内容（使用 `PromptFactory._extract_last_message_text`），同时提取说话者（`_extract_last_message_speaker`）；若 index 引用历史消息，使用 basic_memory 中的用户条目（过滤 assistant）构建映射 |
+| 20 | `_hook_stickers` | 表情包发送（使用 `_pick_sticker_choice` 从模型选择列表中随机选一个并匹配实际文件） |
 | 30 | `_hook_dedup` | 回复去重（仅聊天回复，主动行为不触发） |
 | 40 | `_hook_memory` | 记忆记录（basic + semantic），写入模型输出相关标签 |
 | 50 | `_hook_timestamp` | 回复时间戳 + 持久化 |
@@ -224,6 +225,7 @@ Brain 是引擎的 LLM 调用层，支持：
 | 记忆维护 | 可变 | 语义记忆整理和衰减 |
 | 状态持久化 | 300s | 全量保存运行时状态 |
 | 提醒检查 | 10s | 到期提醒分发（来自 reminder skill） |
+| 表情包缓存预热 | 启动后一次 | 异步预热表情包二元对立缓存（基于词表调用 LLM 生成对立关系，持久化到 `engine_state/sticker_oppositions.json`） |
 
 ## 配置热重载
 
