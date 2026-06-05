@@ -329,14 +329,14 @@ AI 在回复中使用特殊语法来钉住或取消钉住消息：
 
 ### 信息注入
 
-钉住消息会在构建 prompt 时被注入到 system prompt 中，格式为：
+钉住消息会在构建 prompt 时被注入到当前用户消息（user message）之前，格式为：
 
 ```
-【钉住消息】
-- 内容...
+【钉住的重要消息】
+- <pinned_message content="..." speaker="..." reason="...">
 ```
 
-`ContextAssembler` 在 `build_messages()` 中会调用 `pinned_messages_fn` 获取当前群组的有效钉住消息，并将其添加到系统提示中。
+`ContextAssembler` 在 `build_messages()` 中接收 `pinned_messages` 参数，将钉住消息格式化为 `【钉住的重要消息】` 段落注入到 user 消息头部。主动发起消息时同样会注入钉住上下文。模型不再需要手动调用 `list_pinned_messages` 工具来查看钉住项，因为钉住消息会自动出现在每轮对话的当前消息中。
 
 ### 携带计数与自动过期
 

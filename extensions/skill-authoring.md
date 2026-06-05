@@ -68,6 +68,7 @@ def run(greeting: str = "你好", name: str = "大家", **kwargs) -> dict:
 | `dependencies` | list[str] | ❌ | pip 依赖列表，自动安装 |
 | `developer_only` | bool | ❌ | 仅 developer 可调用（默认 false） |
 | `silent` | bool | ❌ | 静默执行（不在对话中显示） |
+| `model_visible` | bool | ❌ | 是否对模型可见（默认 true）。设为 false 则技能不会出现在 function_call 工具列表中，适合仅后台使用的技能 |
 | `adapter_types` | list[str] | ❌ | 限制适配器类型，如 `["napcat"]` |
 | `tags` | list[str] | ❌ | 分类标签 |
 
