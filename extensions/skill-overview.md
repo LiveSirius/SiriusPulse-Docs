@@ -112,6 +112,10 @@ flowchart TB
 | `send_image` | 发送图片到对话 | 适配器绑定 |
 | `upload_file` | 上传文件到对话 | 适配器绑定 |
 | `send_workspace_file` | 发送工作区文件 | 适配器绑定 |
+| `pin_message` | 钉住最近消息到上下文 | 普通（silent） |
+| `unpin_message` | 取消钉住消息 | 普通（silent） |
+| `list_pinned_messages` | 查看当前钉住消息 | 普通 |
+| `send_sticker` | 发送表情包到当前聊天 | 适配器绑定（silent） |
 
 ## 与插件的对比
 
