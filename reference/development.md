@@ -12,17 +12,6 @@ cd SiriusChat
 pip install -e ".[dev,test,provider,quality]"
 ```
 
-### 可用命令
-
-| 命令 | 说明 |
-|------|------|
-| `make test` | 运行测试 |
-| `make test-cov` | 运行测试 + 覆盖率报告 |
-| `make lint` | pylint + flake8 代码检查 |
-| `make format` | black + isort 格式化 |
-| `make typecheck` | mypy 类型检查 |
-| `make build` | 构建分发包 |
-
 ### 一键质量检查
 
 ```bash

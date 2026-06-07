@@ -17,7 +17,7 @@ Sirius Pulse 是一个**支持多人格启用的异步角色扮演程序**。想
 ```mermaid
 flowchart TD
     subgraph MainProcess["主进程"]
-        CLI["python main.py run"]
+        CLI["python -m sirius_pulse run"]
         PM["PersonaManager<br/>扫描/启停/端口分配"]
         WebUI["WebUIServer<br/>aiohttp REST + WebSocket + 认证"]
         NM["NapCatManager<br/>全局安装/多实例调度"]
@@ -80,12 +80,12 @@ flowchart TD
 ### 2.1 从命令行到运行
 
 ```bash
-python main.py run
+python -m sirius_pulse run
 ```
 
 ```mermaid
 flowchart TD
-    A["python main.py run"] --> B["加载 data/global_config.json"]
+    A["python -m sirius_pulse run"] --> B["加载 data/global_config.json"]
     B --> C["创建 PersonaManager<br/>扫描 data/personas/ 目录"]
     C --> D["NapCatManager 全局安装检查<br/>自动安装缺失的 NapCat 二进制"]
     D --> E["为每个 enabled 人格<br/>分配 NapCat 端口与实例目录"]
